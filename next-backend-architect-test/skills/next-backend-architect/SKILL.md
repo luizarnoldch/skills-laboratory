@@ -27,7 +27,7 @@ Each layer is independent. Only create what was requested:
 - `hooks` → `hooks/` files + auto-creates server + schema if missing (CLI handles this)
 - `all` → full stack
 
-The dependency chain (`hooks → server → schema`) is handled by the CLI automatically. Do not create dependency layers manually — if the CLI auto-creates them, let it. If you are in fallback mode and must create them manually, create each layer in order: schema first, then server, then hooks.
+The dependency chain (`hooks → server → schema`) is handled by the CLI automatically. Do not create dependency layers manually. In fallback mode, create in order: schema → server → hooks.
 
 ## Target directory
 
@@ -76,38 +76,21 @@ Use `./scripts/main.sh` from the project root. Compose flags based on what was r
 
 ## Fallback — when the CLI is unavailable
 
-The CLI is unavailable when it does not exist at `./scripts/main.sh` or exits with a non-zero code unrelated to arguments.
+The CLI is unavailable when `./scripts/main.sh` does not exist or exits with a non-zero code unrelated to arguments.
 
 **Do not improvise. Do not write files from your own knowledge of tRPC or Prisma.**
 
-Instead, use the template files in `assets/`:
+Template files live in `assets/`. Match your layer and ORM/transport to the correct file:
 
-| Layer | ORM/Transport | Template file |
-|---|---|---|
-| Schema | Prisma | `assets/prisma-schema.md` |
-| Schema | Drizzle | `assets/drizzle-schema.md` |
-| Server (tRPC) | Prisma or Drizzle | `assets/trpc-server.md` |
-| Server (REST) | Prisma or Drizzle | `assets/api-server.md` |
-| Hooks (tRPC) | — | `assets/trpc-hook.md` |
-| Hooks (REST) | — | `assets/api-hook.md` |
+- Schema + Prisma → `assets/prisma-schema.md`
+- Schema + Drizzle → `assets/drizzle-schema.md`
+- Server tRPC → `assets/trpc-server.md`
+- Server REST → `assets/api-server.md`
+- Hooks tRPC → `assets/*-hook.md`
+- Hooks REST → `assets/*-api-hook.md`
 
-To use a template:
-1. Read the template file.
-2. Copy the content exactly.
-3. Replace every `[Entity]` with PascalCase entity name (e.g. `Product`).
-4. Replace every `[entity]` with camelCase entity name (e.g. `product`).
-5. Replace every `[entities]` with camelCase plural (e.g. `products`).
-6. Write the file to the correct path under `src/features/[entity]/`.
-
-Do not add extra logic, do not adapt the template structure, do not add imports that aren't in the template.
+To apply a template: read the file, copy its content exactly, replace `[Entity]` with PascalCase, `[entity]` with camelCase, `[entities]` with camelCase plural, then write to the correct path under `src/features/[entity]/`. Do not add logic or imports beyond what the template contains.
 
 ## REST transport requirement
 
-If generating REST transport (`--transport api`), the project requires `src/lib/api.ts`. Check if it exists before generating. If it does not exist, read `references/external-api.md` and create it before generating the server layer.
-
-## Naming conventions
-
-- File names: `[entity].schema.ts` — always lowercase kebab-case
-- Entity in code: PascalCase for types and class names (`Product`, `ProductSchema`)
-- Entity in variables and function names: camelCase (`product`, `createProduct`)
-- Hook files: PascalCase component convention (`useCreateProduct.tsx`)
+If generating REST transport (`--transport api`), the project requires `src/lib/api.ts`. Check if it exists first. If missing, read `references/external-api.md` and create it before generating the server layer.
