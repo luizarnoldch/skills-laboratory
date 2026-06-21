@@ -15,7 +15,7 @@ metadata:
 ## Rules
 
 1. **Pages are thin.** `page.tsx` hydrates data and renders a view. No business logic.
-2. **Views orchestrate.** `[Entity]View.tsx` wraps `ErrorBoundary` + `Suspense` around data components.
+2. **Views own layout.** `[Entity]View.tsx` wraps `ErrorBoundary` + `Suspense` in a layout `<div>` with Tailwind classes. No layout wrapper components.
 3. **Components use hooks.** Only the entrypoint component calls hooks; sub-components receive data/callbacks as props.
 4. **Minimal UI.** Loading/error = single `<div>`. Data = one `<div>` per element. Buttons for mutations only.
 5. **Type conventions.** Use `type` for Props (never `interface`). Arrow functions. `export default`.
@@ -33,28 +33,14 @@ metadata:
 
 ## Architecture Overview
 
-Each feature lives under `src/features/[entity]/`:
+This skill creates views and components under `src/features/[entity]/`:
 
 ```txt
-src/app/
-├── [entity]s/
-│   └── page.tsx                      ← List page (thin pass-through)
-└── [entity]s/
-    └── [id]/
-        └── page.tsx                  ← Detail page (thin pass-through)
-
 src/features/[entity]/
-├── hooks/                            ← (Created by next-backend-architect)
-│   ├── Hydrate[Entity]s.tsx
-│   ├── useList[Entity]s.tsx
-│   ├── useSuspenseList[Entity]s.tsx
-│   ├── useCreate[Entity].ts
-│   ├── useUpdate[Entity].ts
-│   └── useDelete[Entity].ts
-├── views/                            ← (Created by this skill)
+├── views/
 │   ├── [Entity]View.tsx
 │   └── [Entity]DetailView.tsx
-└── components/                       ← (Created by this skill)
+└── components/
     ├── [Entity]Table/
     │   └── index.tsx
     ├── [Entity]Detail/
@@ -64,39 +50,21 @@ src/features/[entity]/
     ├── Delete[Entity]Button/
     │   └── index.tsx
     ├── loaders/
-    │   ├── [Entity]ViewLoader.tsx
-    │   └── [Entity]DetailViewLoader.tsx
     ├── error/
-    │   ├── [Entity]ViewError.tsx
-    │   └── [Entity]DetailViewError.tsx
     └── empty/
-        ├── [Entity]ViewEmpty.tsx
-        └── [Entity]DetailViewEmpty.tsx
 ```
+
+Pages go in `src/app/[entity]s/page.tsx` and `src/app/[entity]s/[id]/page.tsx` (scaffold with CLI). Hooks exist in `src/features/[entity]/hooks/` (created by next-backend-architect).
 
 ---
 
 ## Data Flow
 
 ```
-page.tsx (server) → Hydrate (prefetch) → [Entity]View → ErrorBoundary → Suspense → [Entity]Table (client hook)
+page.tsx → Hydrate (prefetch) → [Entity]View (container mx-auto p-6) → ErrorBoundary → Suspense → [Entity]Table (client hook)
 ```
 
-### Single entity flow
-
-```
-page.tsx
-  └─ Hydrate[Entity]s        ← Server Component: prefetches data
-      └─ [Entity]View        ← Client boundary orchestrator
-          ├─ ErrorBoundary   ← Catches query errors
-          │   └─ [Entity]ViewError
-          └─ Suspense        ← Shows loader while query resolves
-              └─ [Entity]Table  ← Calls useSuspenseList[Entity]s()
-```
-
-### Multi-entity flow
-
-See `reference/multi-hydration.md`.
+For multi-entity views, see `reference/multi-hydration.md`.
 
 ---
 
@@ -135,11 +103,11 @@ Detection cues:
 
 After scaffolding:
 
-1. **Imports resolve:** Verify hook imports exist; run `npx tsc --noEmit` for TypeScript errors.
-2. **Render:** Start dev server and navigate to the page. Check for rendering errors.
-3. **Data flow:** Verify data loads correctly in browser network tab or React DevTools.
+1. **Imports resolve:** Run `npx tsc --noEmit`. If hooks are missing: `ls src/features/[entity]/hooks/` → run next-backend-architect → re-run tsc.
+2. **Render:** Start dev server and navigate to the page. Check for rendering errors in browser console.
+3. **Data flow:** Verify data loads correctly in Network tab (API calls) or React DevTools (hook state).
 
-The CLI outputs descriptive errors with recovery steps (e.g., "Hooks not found, run next-backend-architect first").
+The CLI outputs descriptive errors with recovery steps for any scaffolding failures.
 
 ---
 

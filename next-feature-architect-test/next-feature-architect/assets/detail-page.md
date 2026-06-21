@@ -42,12 +42,14 @@ type [Entity]DetailViewProps = {
 
 const [Entity]DetailView = ({ [entity]Id }: [Entity]DetailViewProps) => {
   return (
-    <Hydrate[Entity] [entity]Id={id}>
-      <ErrorBoundary fallback={<[Entity]DetailViewError />}>
-        <Suspense fallback={<[Entity]DetailViewLoader />}>
-          <[Entity]Detail [entity]Id={[entity]Id} />
-        </Suspense>
-      </ErrorBoundary>
+    <Hydrate[Entity] [entity]Id={[entity]Id}>
+      <div className="container mx-auto p-6">
+        <ErrorBoundary fallback={<[Entity]DetailViewError />}>
+          <Suspense fallback={<[Entity]DetailViewLoader />}>
+            <[Entity]Detail [entity]Id={[entity]Id} />
+          </Suspense>
+        </ErrorBoundary>
+      </div>
     </Hydrate[Entity]>
   )
 }

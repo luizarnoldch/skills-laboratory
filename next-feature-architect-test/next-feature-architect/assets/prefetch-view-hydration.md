@@ -11,11 +11,13 @@ import [Entity]Loader from "../components/error/[Entity]Loader";
 const [Entity]View = () => {
   return (
     <Hydrate[Entity]s>
-		<ErrorBoundary fallback={<[Entity]Error />}>
-		  <Suspense fallback={<[Entity]Loader />}>
-			<[Entity]Table />
-		  </Suspense>
-		</ErrorBoundary>
+      <div className="container mx-auto p-6">
+        <ErrorBoundary fallback={<[Entity]Error />}>
+          <Suspense fallback={<[Entity]Loader />}>
+            <[Entity]Table />
+          </Suspense>
+        </ErrorBoundary>
+      </div>
     </Hydrate[Entity]s>
   );
 }
