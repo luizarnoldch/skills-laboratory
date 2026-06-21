@@ -22,7 +22,7 @@ When a request arrives, follow this sequence exactly:
 
 Each layer is independent. Only create what was requested:
 
-- `schema` → only `schemas/[entity].schema.ts`
+- `schema` → `schemas/`; after generation, update fields to match the entity model using Zod v4 types.
 - `server` → `server/` files + auto-creates schema if missing (CLI handles this)
 - `hooks` → `hooks/` files + auto-creates server + schema if missing (CLI handles this)
 - `all` → full stack
