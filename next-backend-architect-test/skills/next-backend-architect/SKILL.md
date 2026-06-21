@@ -84,12 +84,15 @@ Template files live in `assets/`. Match your layer and ORM/transport to the corr
 
 - Schema + Prisma → `assets/prisma-schema.md`
 - Schema + Drizzle → `assets/drizzle-schema.md`
-- Server tRPC → `assets/trpc-server.md`
+- Server tRPC router → `assets/trpc-router.md`
+- Server tRPC service → `assets/trpc-service.md`
+- Server tRPC Prisma repository → `assets/prisma-repository.md`
+- Server tRPC Drizzle repository → `assets/drizzle-repository.md`
 - Server REST → `assets/api-server.md`
 - Hooks tRPC → `assets/*-hook.md`
 - Hooks REST → `assets/*-api-hook.md`
 
-To apply a template: read the file, copy its content exactly, replace `[Entity]` with PascalCase, `[entity]` with camelCase, `[entities]` with camelCase plural, then write to the correct path under `src/features/[entity]/`. Do not add logic or imports beyond what the template contains.
+To apply a template: read the file, copy its content exactly, replace `[Entity]` with PascalCase, `[entity]` with camelCase, `[entityTable]` with snake_case, then write to the correct path under `src/features/[entity]/`. Do not add logic or imports beyond what the template contains.
 
 ## REST transport requirement
 

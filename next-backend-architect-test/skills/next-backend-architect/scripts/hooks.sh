@@ -10,18 +10,18 @@ HOOK_FILES=(
   "hydrate:hydrate-hook.md:Hydrate[Entity]s.tsx"
   "list:list-hook.md:useList[Entity]s.tsx"
   "list-suspense:list-suspense-hook.md:useSuspenseList[Entity]s.tsx"
-  "create:create-hook.md:useCreate[Entity].ts"
-  "update:update-hook.md:useUpdate[Entity].ts"
-  "delete:delete-hook.md:useDelete[Entity].ts"
+  "create:create-hook.md:useCreate[Entity].tsx"
+  "update:update-hook.md:useUpdate[Entity].tsx"
+  "delete:delete-hook.md:useDelete[Entity].tsx"
 )
 
 HOOK_API_FILES=(
   "hydrate:hydrate-api-hook.md:Hydrate[Entity]s.tsx"
   "list:list-api-hook.md:useList[Entity]s.tsx"
   "list-suspense:list-suspense-api-hook.md:useSuspenseList[Entity]s.tsx"
-  "create:create-api-hook.md:useCreate[Entity].ts"
-  "update:update-api-hook.md:useUpdate[Entity].ts"
-  "delete:delete-api-hook.md:useDelete[Entity].ts"
+  "create:create-api-hook.md:useCreate[Entity].tsx"
+  "update:update-api-hook.md:useUpdate[Entity].tsx"
+  "delete:delete-api-hook.md:useDelete[Entity].tsx"
 )
 
 generate_hook() {
