@@ -1,0 +1,42 @@
+[
+  {
+    "query": "Tengo el siguiente modelo de Prisma en fixtures/prisma-simple.prisma. Genera el feature completo (schema, server y hooks) para la entidad Product usando tRPC y Prisma. El output debe quedar en src/features/product/.",
+    "should_trigger": true
+  },
+  {
+    "query": "Usando el schema en fixtures/prisma-relations.prisma, genera el feature completo para la entidad Order usando tRPC y Prisma. Order tiene una FK hacia User y una relación uno-a-muchos con OrderItem. El output en src/features/order/.",
+    "should_trigger": true
+  },
+  {
+    "query": "Tengo el schema de Drizzle en fixtures/drizzle-simple.ts para la tabla products. Genera el feature completo para Product usando Drizzle como ORM y tRPC como transport. El output en src/features/product/.",
+    "should_trigger": true
+  },
+  {
+    "query": "Crea un endpoint REST para la entidad Product usando el ORM Drizzle.",
+    "should_trigger": true
+  },
+  {
+    "query": "I need a tRPC router for the User entity with full CRUD operations.",
+    "should_trigger": true
+  },
+  {
+    "query": "Scaffold the backend hooks and server for a new entity called Invoice.",
+    "should_trigger": true
+  },
+  {
+    "query": "Add CRUD operations for a Product entity in my Next.js app.",
+    "should_trigger": true
+  },
+  {
+    "query": "What's the weather like today?",
+    "should_trigger": false
+  },
+  {
+    "query": "Write a React component that shows a login form.",
+    "should_trigger": false
+  },
+  {
+    "query": "How do I configure ESLint in my project?",
+    "should_trigger": false
+  }
+]

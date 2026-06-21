@@ -1,0 +1,63 @@
+{
+  "skill_name": "next-backend-architect",
+  "evals": [
+    {
+      "id": 1,
+      "name": "simple-prisma-entity",
+      "prompt": "Tengo el siguiente modelo de Prisma en fixtures/prisma-simple.prisma. Genera el feature completo (schema, server y hooks) para la entidad Product usando tRPC y Prisma. El output debe quedar en src/features/product/.",
+      "expected_output": "Carpeta src/features/product/ con subcarpetas schemas/, server/ y hooks/. El CLI debe ser ejecutado. Los archivos deben seguir los templates del skill.",
+      "files": ["fixtures/prisma-simple.prisma"],
+      "expectations": [
+        "El agente ejecutó ./scripts/main.sh (visible en el transcript como llamada bash al CLI)",
+        "Existe el archivo src/features/product/schemas/product.schema.ts",
+        "Existe el archivo src/features/product/server/product.repository.ts",
+        "Existe el archivo src/features/product/server/product.service.ts",
+        "Existe el archivo src/features/product/server/product.router.ts",
+        "Existe al menos un archivo .tsx en src/features/product/hooks/",
+        "product.schema.ts importa de 'zod' (contiene: import { z } from 'zod')",
+        "product.repository.ts referencia prisma o db — no contiene queries SQL directas (no tiene SELECT, INSERT, UPDATE, DELETE en mayúsculas como strings literales)",
+        "product.router.ts contiene createTRPCRouter",
+        "Al menos un hook contiene useQuery o useMutation de @tanstack/react-query",
+        "Ningún archivo generado contiene ': any' como anotación de tipo explícita",
+        "Los nombres de archivo usan lowercase (product.schema.ts, no Product.schema.ts)"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "relational-prisma-entity",
+      "prompt": "Usando el schema en fixtures/prisma-relations.prisma, genera el feature completo para la entidad Order usando tRPC y Prisma. Order tiene una FK hacia User y una relación uno-a-muchos con OrderItem. El output en src/features/order/.",
+      "expected_output": "Carpeta src/features/order/ completa. El repository debe manejar las relaciones con include o select. El schema Zod debe definir el enum OrderStatus.",
+      "files": ["fixtures/prisma-relations.prisma"],
+      "expectations": [
+        "El agente ejecutó ./scripts/main.sh (visible en transcript)",
+        "Existe el archivo src/features/order/schemas/order.schema.ts",
+        "Existe el archivo src/features/order/server/order.repository.ts",
+        "Existe el archivo src/features/order/server/order.service.ts",
+        "Existe el archivo src/features/order/server/order.router.ts",
+        "Existe al menos un archivo .tsx en src/features/order/hooks/",
+        "order.schema.ts define el enum OrderStatus usando Zod (contiene z.enum o z.nativeEnum)",
+        "order.repository.ts contiene 'include' o 'select' para manejar las relaciones",
+        "order.service.ts importa el repository y NO contiene 'prisma.' como llamada directa al ORM",
+        "order.router.ts contiene createTRPCRouter",
+        "El código TypeScript compila sin errores (verificado por check_compilation.sh)"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "drizzle-entity",
+      "prompt": "Tengo el schema de Drizzle en fixtures/drizzle-simple.ts para la tabla products. Genera el feature completo para Product usando Drizzle como ORM y tRPC como transport. El output en src/features/product/.",
+      "expected_output": "Carpeta src/features/product/ donde el repository usa la API de Drizzle (db.select, db.insert, etc.) y NO usa sintaxis de Prisma.",
+      "files": ["fixtures/drizzle-simple.ts"],
+      "expectations": [
+        "El agente ejecutó ./scripts/main.sh con --database drizzle (visible en transcript)",
+        "Existe el archivo src/features/product/server/product.repository.ts",
+        "product.repository.ts contiene sintaxis de Drizzle: db.select() o db.insert() o db.update() o db.delete()",
+        "product.repository.ts NO contiene 'prisma.' como llamada de ORM",
+        "product.repository.ts NO contiene '.findMany(' ni '.findUnique(' ni '.create(' (son métodos de Prisma)",
+        "Existe al menos un archivo .tsx en src/features/product/hooks/",
+        "product.schema.ts importa de 'zod'",
+        "El código TypeScript compila sin errores (verificado por check_compilation.sh)"
+      ]
+    }
+  ]
+}
