@@ -1,7 +1,8 @@
 ---
 name: next-feature-architect
-description: "Scaffolds and maintains the full frontend of a feature-based Next.js app, Use this skill when creating or modifying frontend layers: hook utilization, pages and views integrations, data hydration, frontend business logic."
+description: "Creates and maintains Next.js frontend features: pages, components, views, and hook integrations with server-side data prefetching, Suspense boundaries, and mutations. Use this skill when: building React components (.tsx), creating Next.js pages with app router, implementing TanStack Query hooks, adding Suspense and error boundaries, building forms and mutations, configuring server-side rendering (SSR)."
 metadata:
+  version: 1.0.0
   domain: nextjs-frontend
   stack: tanstack-query,tanstack-form,react-error-boundary
   transport: trpc,rest-api
@@ -13,26 +14,22 @@ metadata:
 
 ## Rules
 
-1. **Pages are thin pass-throughs.** `page.tsx` only hydrates data and renders a view. No business logic.
-2. **Views wire hydration.** `[Entity]View.tsx` orchestrates `ErrorBoundary` + `Suspense` around data components.
-3. **Components import hooks.** Only the entrypoint component calls hooks. Sub-components receive data/callbacks as props.
-4. **No complex UI.** Loading = `<div>Loading...</div>`. Error = `<div>Failed to load</div>`. Data = one `<div>` per element. Buttons only for mutations.
-5. **Component conventions.** Use `type` for Props (never `interface`). Arrow functions. `export default`.
-6. **Default query: suspense.** Use `useSuspenseList[Entity]s` always. Fall back to `useList[Entity]s` only if explicitly requested.
+1. **Pages are thin.** `page.tsx` hydrates data and renders a view. No business logic.
+2. **Views orchestrate.** `[Entity]View.tsx` wraps `ErrorBoundary` + `Suspense` around data components.
+3. **Components use hooks.** Only the entrypoint component calls hooks; sub-components receive data/callbacks as props.
+4. **Minimal UI.** Loading/error = single `<div>`. Data = one `<div>` per element. Buttons for mutations only.
+5. **Type conventions.** Use `type` for Props (never `interface`). Arrow functions. `export default`.
+6. **Default: suspense.** Use `useSuspenseList[Entity]s`. Fall back to `useList[Entity]s` only if explicitly requested.
 
-**Ask before scaffolding.** When the request is ambiguous, ask:
+**When ambiguous, ask:** "List page or detail page?"
 
-> "List page or detail page?"
-
-**Layer isolation:**
-- `--page` → only `src/app/**/page.tsx`
-- `--view` → only `src/features/[entity]/views/`
-- `--view-full` → views + components (loaders, error, table/detail)
+**Layer isolation flags:**
+- `--page` → `src/app/**/page.tsx` only
+- `--view` → `src/features/[entity]/views/` only
+- `--view-full` → views + components
 - `--all` → pages + views + components
 
-**Dependency:** `frontend → hooks` (hooks must exist first — run next-backend-architect if not)
-
-**Prefer CLI.** Use `./scripts/main.sh` for new scaffolds. Fallback to templates only if CLI unavailable.
+**Dependency:** hooks must exist first—run next-backend-architect if not. **Prefer CLI** (`./scripts/main.sh`).
 
 ## Architecture Overview
 
@@ -105,141 +102,49 @@ See `reference/multi-hydration.md`.
 
 ## Connect App to Views (pages)
 
-Use `assets/list-page.md` and `assets/detail-page.md`.
-
 ### CLI (preferred)
 
 ```bash
-# List page
-./scripts/main.sh <target> <entity> --page list
-
-# Detail page
-./scripts/main.sh <target> <entity> --page detail
+./scripts/main.sh <target> <entity> --page list      # List page
+./scripts/main.sh <target> <entity> --page detail    # Detail page
+./scripts/main.sh <target> <entity> --view-full      # Views + components
+./scripts/main.sh <target> <entity> --all            # Pages + views + components
 ```
 
-### Template-driven
+### Template-driven (fallback)
 
-Read the matching asset file and replace `[Entity]`/`[entity]` with the actual entity name.
-
----
-
-## Prefetch with Hydrate Hooks
-
-The `Hydrate[Entity]s` server component wraps the page content. It calls `prefetch()` on the server side so data is available before the client component mounts.
-
-**Default pattern** (suspense): `prefetch` → `ErrorBoundary` → `Suspense` → component using `useSuspenseQuery`.
-
-See `assets/list-page.md` for the complete chain.
-
-### CLI
-
-```bash
-./scripts/main.sh <target> <entity> --page list   # includes Hydrate + view + page
-```
-
----
-
-## Query Hooks with Loading/Error States
-
-### Default: useSuspenseList[Entity]s
-
-Parent components handle `ErrorBoundary` + `Suspense`. The data component is clean — no loading/error branches.
-
-```tsx
-"use client"
-import useSuspenseListProducts from "../../hooks/useSuspenseListProducts"
-
-const ProductsTable = () => {
-  const { products } = useSuspenseListProducts()
-  return <div>{products.map((p) => <div key={p.id}>{p.name}</div>)}</div>
-}
-export default ProductsTable
-```
-
-### Alternate: useList[Entity]s (only if explicitly requested)
-
-Handles `isLoading`/`error` inline with minimal markup.
-
-```tsx
-"use client"
-import useListProducts from "../../hooks/useListProducts"
-
-const ProductsList = () => {
-  const { products, isLoading, error } = useListProducts()
-  if (isLoading) return <div>Loading...</div>
-  if (error) return <div>Failed to load</div>
-  return <div>{products.map((p) => <div key={p.id}>{p.name}</div>)}</div>
-}
-export default ProductsList
-```
-
-Full reference: `assets/query-usage.md`.
-
----
-
-## Mutation Hooks (Button Only, No Complex UI)
-
-### Delete: button only
-
-```tsx
-"use client"
-import useDeleteProduct from "../../hooks/useDeleteProduct"
-
-type DeleteProductButtonProps = { productId: string }
-const DeleteProductButton = ({ productId }: DeleteProductButtonProps) => {
-  const { mutate, isPending } = useDeleteProduct({ productId })
-  return <button onClick={() => mutate()} disabled={isPending}>
-    {isPending ? "Deleting..." : "Delete"}
-  </button>
-}
-export default DeleteProductButton
-```
-
-### Create: minimal form + button
-
-```tsx
-"use client"
-import useCreateProduct from "../../hooks/useCreateProduct"
-
-const CreateProductForm = () => {
-  const { form, isPending } = useCreateProduct()
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => { e.preventDefault(); form.handleSubmit() }
-  return (
-    <form onSubmit={handleSubmit}>
-      <form.Field name="name">
-        {(field) => <input name={field.name} value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} />}
-      </form.Field>
-      <button type="submit" disabled={isPending}>{isPending ? "Creating..." : "Create"}</button>
-    </form>
-  )
-}
-export default CreateProductForm
-```
-
-Full reference: `assets/mutation-usage.md` and `reference/component-logic.md`.
+Use `assets/list-page.md` or `assets/detail-page.md` and replace `[Entity]`/`[entity]` placeholders.
 
 ---
 
 ## Transport Detection
 
-The CLI auto-detects transport (tRPC vs REST API) from existing hooks. Manual override:
+The CLI auto-detects transport from existing hooks. Override with:
 
 ```bash
 ./scripts/main.sh . Product --all --transport api
 ```
 
-When reading existing hooks to build pages/views, check whether the hook uses:
-- **tRPC**: `useTRPC()`, `trpc.[entity].list.queryOptions()`
-- **REST API**: `apiFetch`, `apiPrefetch`, raw fetch
+Detection cues:
+- **tRPC:** `useTRPC()`, `trpc.[entity].list.queryOptions()`
+- **REST API:** `apiFetch`, `apiPrefetch`, raw fetch
 
-Generate matching imports and patterns accordingly.
+---
+
+## Verify & Validate
+
+After scaffolding:
+
+1. **Imports resolve:** Verify hook imports exist; run `npx tsc --noEmit` for TypeScript errors.
+2. **Render:** Start dev server and navigate to the page. Check for rendering errors.
+3. **Data flow:** Verify data loads correctly in browser network tab or React DevTools.
+
+The CLI outputs descriptive errors with recovery steps (e.g., "Hooks not found, run next-backend-architect first").
 
 ---
 
 ## Notes
 
-- If hooks don't exist yet, run `next-backend-architect` first.
-- `src/lib/api.ts` is required for REST API transport. See next-backend-architect's `references/external-api.md`.
-- The `components/loaders/` and `components/error/` folders contain minimal placeholders — no spinner libraries, no styled error pages.
-- For multi-entity views, see `reference/multi-hydration.md`.
-- For form vs button-only logic patterns, see `reference/component-logic.md`.
+- REST API: `src/lib/api.ts` required; see next-backend-architect docs for config.
+- Loaders/error components are minimal; add styling/spinners as needed.
+- Multi-entity views: `reference/multi-hydration.md`. Form logic: `reference/component-logic.md`.
