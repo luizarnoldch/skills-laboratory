@@ -35,11 +35,13 @@ import ${entity_pascal}ViewError from "../components/error/${entity_pascal}ViewE
 
 const ${entity_pascal}View = () => {
   return (
-    <ErrorBoundary fallback={<${entity_pascal}ViewError />}>
-      <Suspense fallback={<${entity_pascal}ViewLoader />}>
-        <${entity_pascal}Table />
-      </Suspense>
-    </ErrorBoundary>
+    <div className="container mx-auto p-6">
+      <ErrorBoundary fallback={<${entity_pascal}ViewError />}>
+        <Suspense fallback={<${entity_pascal}ViewLoader />}>
+          <${entity_pascal}Table />
+        </Suspense>
+      </ErrorBoundary>
+    </div>
   )
 }
 
@@ -65,11 +67,13 @@ type ${entity_pascal}DetailViewProps = {
 
 const ${entity_pascal}DetailView = ({ ${entity_camel}Id }: ${entity_pascal}DetailViewProps) => {
   return (
-    <ErrorBoundary fallback={<${entity_pascal}DetailViewError />}>
-      <Suspense fallback={<${entity_pascal}DetailViewLoader />}>
-        <${entity_pascal}Detail ${entity_camel}Id={${entity_camel}Id} />
-      </Suspense>
-    </ErrorBoundary>
+    <div className="container mx-auto p-6">
+      <ErrorBoundary fallback={<${entity_pascal}DetailViewError />}>
+        <Suspense fallback={<${entity_pascal}DetailViewLoader />}>
+          <${entity_pascal}Detail ${entity_camel}Id={${entity_camel}Id} />
+        </Suspense>
+      </ErrorBoundary>
+    </div>
   )
 }
 
