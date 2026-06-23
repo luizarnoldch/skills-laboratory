@@ -89,10 +89,20 @@ Template files live in `assets/`. Match your layer and ORM/transport to the corr
 - Server tRPC Prisma repository → `assets/prisma-repository.md`
 - Server tRPC Drizzle repository → `assets/drizzle-repository.md`
 - Server REST → `assets/api-server.md`
-- Hooks tRPC → `assets/*-hook.md`
-- Hooks REST → `assets/*-api-hook.md`
+- Hooks tRPC hydrate → `hydrate-hook.md`
+- Hooks tRPC list → `assets/list-hook.md`
+- Hooks tRPC list (suspense) → `assets/list-suspense-hook.md`
+- Hooks tRPC create → `assets/create-hook.md`
+- Hooks tRPC update → `assets/update-hook.md`
+- Hooks tRPC delete → `assets/delete-hook.md`
+- Hooks REST hydrate → `assets/hydrate-api-hook.md`
+- Hooks REST list → `assets/list-api-hook.md`
+- Hooks REST list (suspense) → `assets/list-suspense-api-hook.md`
+- Hooks REST create → `assets/create-api-hook.md`
+- Hooks REST update → `assets/update-api-hook.md`
+- Hooks REST delete → `assets/delete-api-hook.md`
 
-To apply a template: read the file, copy its content exactly, replace `[Entity]` with PascalCase, `[entity]` with camelCase, `[entityTable]` with snake_case, then write to the correct path under `src/features/[entity]/`. Do not add logic or imports beyond what the template contains.
+To apply a template: read the file, copy its content exactly, replace `[Entity]` with PascalCase, `[entity]` with camelCase, `[entityTable]` with snake_case, `[entity-kebab]` with kebab-case, then write to the correct path under `src/features/[entity]/`. Do not add logic or imports beyond what the template contains.
 
 ## REST transport requirement
 

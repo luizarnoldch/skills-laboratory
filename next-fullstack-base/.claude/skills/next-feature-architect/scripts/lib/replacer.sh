@@ -25,8 +25,3 @@ replace_placeholders() {
 
   echo "$content"
 }
-
-extract_code_block() {
-  local content="$1"
-  echo "$content" | sed -n '/^```[a-z]*$/,/^```$/p' | sed '1d;$d'
-}

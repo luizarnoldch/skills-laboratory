@@ -116,8 +116,8 @@ detect_transport() {
 show_tree() {
   echo "Available scaffold combinations:"
   echo ""
-  echo "  --page --type list           → List page + view (src/app/[entity]s/page.tsx + views/)"
-  echo "  --page --type detail         → Detail page + view (src/app/[entity]s/[id]/page.tsx + views/)"
+  echo "  --page list                  → List page + view (src/app/[entity]s/page.tsx + views/)"
+  echo "  --page detail                → Detail page + view (src/app/[entity]s/[id]/page.tsx + views/)"
   echo "  --view                       → View only (no page)"
   echo "  --all                        → Full feature frontend (page + view + components)"
   echo ""

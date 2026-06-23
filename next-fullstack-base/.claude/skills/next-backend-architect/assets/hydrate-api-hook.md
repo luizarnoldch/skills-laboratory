@@ -1,6 +1,7 @@
 ```tsx
-// Hydrate[Entity].tsx
-import { HydrateClient, prefetch, trpc } from "@/trpc/server"
+// Hydrate[Entity]s.tsx
+import { HydrateClient, apiPrefetch } from "@/trpc/server"
+import { list[Entity]s } from "../server/[entity-kebab].api"
 import { ReactNode } from "react"
 
 type Hydrate[Entity]sProps = {
@@ -9,9 +10,9 @@ type Hydrate[Entity]sProps = {
 
 const Hydrate[Entity]s = ({ children }: Hydrate[Entity]sProps) => {
   apiPrefetch({
-      queryKey: ["[entity]s", "list"],
-      queryFn: () => list[Entity]s(),
-    })
+    queryKey: ["[entity]s", "list"],
+    queryFn: () => list[Entity]s(),
+  })
 
   return (
     <HydrateClient>

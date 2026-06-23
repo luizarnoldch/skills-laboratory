@@ -24,7 +24,6 @@ generate_page() {
     mkdir -p "$page_dir"
 
     local page_file="$page_dir/page.tsx"
-    local entity_code="const ${entity_kebab}s = await searchParams"
 
     cat > "$page_file" <<PAGETSX
 import Hydrate${entity_pascal}s from "@/features/${entity_kebab}/hooks/Hydrate${entity_pascal}s"
