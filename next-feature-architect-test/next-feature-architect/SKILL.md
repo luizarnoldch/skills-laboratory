@@ -40,9 +40,8 @@ Generate exactly these 5 files for `<entity>`:
 | 1 | `src/app/[entity]s/page.tsx` |
 | 2 | `src/features/[entity]/views/[Entity]View.tsx` |
 | 3 | `src/features/[entity]/components/[Entity]List/index.tsx` |
-| 4 | `src/features/[entity]/components/[Entity]CreateDialog.tsx` |
-| 5 | `src/features/[entity]/components/[Entity]UpdateDialog.tsx` |
-| 6 | `src/features/[entity]/components/[Entity]DeleteDialog.tsx` |
+| 4 | `src/features/[entity]/components/[Entity]FormCreate.tsx` |
+| 5 | `src/features/[entity]/components/[Entity]FormUpdate.tsx` |
 
 **Layer flags:**
 - `--page` → file 1 only
@@ -62,10 +61,9 @@ src/features/[entity]/
 │   └── [Entity]View.tsx              ← no 'use client', Tailwind v4 grid layout
 └── components/
     ├── [Entity]List/
-    │   └── index.tsx                 ← 'use client', data + toggle state
-    ├── [Entity]CreateDialog.tsx      ← 'use client', Dialog + useCreate[Entity]
-    ├── [Entity]UpdateDialog.tsx      ← 'use client', Dialog + useUpdate[Entity], keyed by id
-    └── [Entity]DeleteDialog.tsx      ← 'use client', AlertDialog + useDelete[Entity]
+    │   └── index.tsx                 ← 'use client', data + toggle state + useDelete[Entity]
+    ├── [Entity]FormCreate.tsx        ← 'use client', useCreate[Entity]
+    └── [Entity]FormUpdate.tsx        ← 'use client', useUpdate[Entity], keyed by id
 ```
 
 Data flow:
