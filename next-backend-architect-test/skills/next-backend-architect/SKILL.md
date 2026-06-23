@@ -1,5 +1,6 @@
 ---
 name: next-backend-architect
+path: .claude/skills/next-backend-architect
 description: "Scaffolds backend feature layers for a Next.js app using a CLI + template system. Use this skill whenever the user wants to create, generate, scaffold, or add backend code for any feature or entity — including schemas, tRPC routers, REST API endpoints, services, repositories, or TanStack Query/Form hooks. Triggers on: 'create feature', 'scaffold', 'add CRUD', 'new entity', 'generate backend', 'tRPC router for X', 'hooks for X', 'repository for X', 'service for X', or any request to build backend layers for a named model or table. NEVER write these files from scratch using your general knowledge of tRPC, Prisma, or Drizzle — the project has a specific CLI and template system that must be followed. Improvising produces code that breaks the project's architecture even when it looks correct."
 ---
 
@@ -80,20 +81,30 @@ The CLI is unavailable when `./scripts/main.sh` does not exist or exits with a n
 
 **Do not improvise. Do not write files from your own knowledge of tRPC or Prisma.**
 
-Template files live in `assets/`. Match your layer and ORM/transport to the correct file:
+Template files live in `.claude/skills/next-backend-architect/assets/`. Match your layer and ORM/transport to the correct file:
 
-- Schema + Prisma → `assets/prisma-schema.md`
-- Schema + Drizzle → `assets/drizzle-schema.md`
-- Server tRPC router → `assets/trpc-router.md`
-- Server tRPC service → `assets/trpc-service.md`
-- Server tRPC Prisma repository → `assets/prisma-repository.md`
-- Server tRPC Drizzle repository → `assets/drizzle-repository.md`
-- Server REST → `assets/api-server.md`
-- Hooks tRPC → `assets/*-hook.md`
-- Hooks REST → `assets/*-api-hook.md`
+- Schema + Prisma → `.claude/skills/next-backend-architect/assets/prisma-schema.md`
+- Schema + Drizzle → `.claude/skills/next-backend-architect/assets/drizzle-schema.md`
+- Server tRPC router → `.claude/skills/next-backend-architect/assets/trpc-router.md`
+- Server tRPC service → `.claude/skills/next-backend-architect/assets/trpc-service.md`
+- Server tRPC Prisma repository → `.claude/skills/next-backend-architect/assets/prisma-repository.md`
+- Server tRPC Drizzle repository → `.claude/skills/next-backend-architect/assets/drizzle-repository.md`
+- Server REST → `.claude/skills/next-backend-architect/assets/api-server.md`
+- Hooks tRPC hydrate → `.claude/skills/next-backend-architect/assets/hydrate-hook.md`
+- Hooks tRPC list → `.claude/skills/next-backend-architect/assets/list-hook.md`
+- Hooks tRPC list (suspense) → `.claude/skills/next-backend-architect/assets/list-suspense-hook.md`
+- Hooks tRPC create → `.claude/skills/next-backend-architect/assets/create-hook.md`
+- Hooks tRPC update → `.claude/skills/next-backend-architect/assets/update-hook.md`
+- Hooks tRPC delete → `.claude/skills/next-backend-architect/assets/delete-hook.md`
+- Hooks REST hydrate → `.claude/skills/next-backend-architect/assets/hydrate-api-hook.md`
+- Hooks REST list → `.claude/skills/next-backend-architect/assets/list-api-hook.md`
+- Hooks REST list (suspense) → `.claude/skills/next-backend-architect/assets/list-suspense-api-hook.md`
+- Hooks REST create → `.claude/skills/next-backend-architect/assets/create-api-hook.md`
+- Hooks REST update → `.claude/skills/next-backend-architect/assets/update-api-hook.md`
+- Hooks REST delete → `.claude/skills/next-backend-architect/assets/delete-api-hook.md`
 
-To apply a template: read the file, copy its content exactly, replace `[Entity]` with PascalCase, `[entity]` with camelCase, `[entityTable]` with snake_case, then write to the correct path under `src/features/[entity]/`. Do not add logic or imports beyond what the template contains.
+To apply a template: read the file, copy its content exactly, replace `[Entity]` with PascalCase, `[entity]` with camelCase, `[entityTable]` with snake_case, `[entity-kebab]` with kebab-case, then write to the correct path under `src/features/[entity]/`. Do not add logic or imports beyond what the template contains.
 
 ## REST transport requirement
 
-If generating REST transport (`--transport api`), the project requires `src/lib/api.ts`. Check if it exists first. If missing, read `references/external-api.md` and create it before generating the server layer.
+If generating REST transport (`--transport api`), the project requires `src/lib/api.ts`. Check if it exists first. If missing, read `.claude/skills/next-backend-architect/references/external-api.md` and create it before generating the server layer.

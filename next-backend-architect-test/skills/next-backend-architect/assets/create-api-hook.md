@@ -2,12 +2,12 @@
 // useCreate[Entity].tsx
 "use client"
 
-import { useTRPC } from "@/trpc/client"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useForm } from "@tanstack/react-form"
 import { toast } from "sonner"
-import { create[Entity]Schema } from "../schema/[entity].schema"
-import type { Create[Entity]Input } from "../schema/[entity].schema"
+import { create[Entity] } from "../server/[entity-kebab].api"
+import { create[Entity]Schema } from "../schemas/[entity-kebab].schema"
+import type { Create[Entity]Input } from "../schemas/[entity-kebab].schema"
 
 type UseCreate[Entity]Props = {
   onSuccess?: () => void
@@ -15,11 +15,10 @@ type UseCreate[Entity]Props = {
 }
 
 const useCreate[Entity] = ({ onSuccess, onError }: UseCreate[Entity]Props = {}) => {
-  const trpc = useTRPC()
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
-    ...trpc.[entity].create.mutationOptions(),
+    mutationFn: (data: Create[Entity]Input) => create[Entity](data),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["[entity]s", "list"] })
       toast.success(`[Entity] created successfully`)
