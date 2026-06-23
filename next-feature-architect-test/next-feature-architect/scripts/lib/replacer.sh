@@ -21,6 +21,7 @@ replace_placeholders() {
   content="${content//\[Entity\]/$entity_pascal}"
   content="${content//\[entity\]/$entity_camel}"
   content="${content//\[entityTable\]/$entity_snake}"
+  content="${content//\[entity-kebab\]/$entity_kebab}"
 
   echo "$content"
 }

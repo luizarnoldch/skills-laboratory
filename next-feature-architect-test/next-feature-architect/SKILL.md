@@ -1,12 +1,6 @@
 ---
 name: next-feature-architect
 description: "Creates and maintains Next.js frontend features: pages, components, views, and hook integrations with server-side data prefetching, Suspense boundaries, and mutations. Use this skill when: building React components (.tsx), creating Next.js pages with app router, implementing TanStack Query hooks, adding Suspense and error boundaries, building forms and mutations, configuring server-side rendering (SSR)."
-metadata:
-  version: 1.0.0
-  domain: nextjs-frontend
-  stack: tanstack-query,tanstack-form,react-error-boundary
-  transport: trpc,rest-api
-  pattern: layered-architecture
 ---
 # Next.js Feature Architect
 
@@ -14,105 +8,111 @@ metadata:
 
 ## Rules
 
-1. **Pages are thin.** `page.tsx` hydrates data and renders a view. No business logic.
-2. **Views own layout.** `[Entity]View.tsx` wraps `ErrorBoundary` + `Suspense` in a layout `<div>` with Tailwind classes. No layout wrapper components.
-3. **Components use hooks.** Only the entrypoint component calls hooks; sub-components receive data/callbacks as props.
-4. **Minimal UI.** Loading/error = single `<div>`. Data = one `<div>` per element. Buttons for mutations only.
-5. **Type conventions.** Use `type` for Props (never `interface`). Arrow functions. `export default`.
-6. **Default: suspense.** Use `useSuspenseList[Entity]s`. Fall back to `useList[Entity]s` only if explicitly requested.
+1. **Pages are thin.** `page.tsx` renders a view. No business logic.
+2. **Views compose.** `[Entity]View.tsx` wraps ErrorBoundary → Suspense → components. No `use client`.
+3. **Hooks stay in entrypoints.** Only `[Entity]List/index.tsx` calls hooks; sub-components receive props.
+4. **Types and style.** Use `type` for Props (never `interface`). Arrow functions. `export default`.
+5. **Default: suspense.** Use `useSuspenseList[Entity]s`. Fall back to `useList[Entity]s` only if explicitly requested.
+6. **Never read `@/components/ui/*` files.** shadcn APIs are stable — import <Button>, <Input>, <Dialog>, <AlertDialog>, <Table>, <Badge>, <Spinner> directly without inspection.
+7. **Read only `schemas/[entity].schema.ts` and `hooks/*.tsx`** to understand an entity. Skip server files.
+8. **Never conditionally call hooks.** For create vs update forms, use separate components (`[Entity]FormCreate`, `[Entity]FormUpdate`).
+9. **Never spawn a sub-agent for exploration.** Read these exact files directly,in this order, then stop:
+  - schemas/[entity].schema.ts
+  - hooks/useSuspenseList[Entity]s.tsx
+  - hooks/useCreate[Entity].tsx
+  - hooks/useUpdate[Entity].tsx
+  - hooks/useDelete[Entity].tsx
+  - hooks/Hydrate[Entity]s.tsx
+These six files contain everything needed. Do not read server files, ui files, or any other part of the codebase.
 
 **When ambiguous, ask:** "List page or detail page?"
 
-**Layer isolation flags:**
-- `--page` → `src/app/**/page.tsx` only
-- `--view` → `src/features/[entity]/views/` only
-- `--view-full` → views + components
-- `--all` → pages + views + components
+**Dependency:** hooks must exist first — run `next-backend-architect` if missing. **Prefer CLI** (`./scripts/main.sh`).
 
-**Dependency:** hooks must exist first—run next-backend-architect if not. **Prefer CLI** (`./scripts/main.sh`).
+---
 
-## Architecture Overview
+## Output files: list page (`--all`)
 
-This skill creates views and components under `src/features/[entity]/`:
+Generate exactly these 5 files for `<entity>`:
 
-```txt
+| # | Path |
+|---|------|
+| 1 | `src/app/[entity]s/page.tsx` |
+| 2 | `src/features/[entity]/views/[Entity]View.tsx` |
+| 3 | `src/features/[entity]/components/[Entity]List/index.tsx` |
+| 4 | `src/features/[entity]/components/[Entity]CreateDialog.tsx` |
+| 5 | `src/features/[entity]/components/[Entity]UpdateDialog.tsx` |
+| 6 | `src/features/[entity]/components/[Entity]DeleteDialog.tsx` |
+
+**Layer flags:**
+- `--page` → file 1 only
+- `--view` → file 2 only
+- `--view-full` → files 2–5
+- `--all` → files 1–5
+
+**Templates:** `assets/templates/` — edit these files to change the generated code pattern.
+
+---
+
+## Architecture
+
+```
 src/features/[entity]/
 ├── views/
-│   ├── [Entity]View.tsx
-│   └── [Entity]DetailView.tsx
+│   └── [Entity]View.tsx              ← no 'use client', Tailwind v4 grid layout
 └── components/
-    ├── [Entity]Table/
-    │   └── index.tsx
-    ├── [Entity]Detail/
-    │   └── index.tsx
-    ├── [Entity]Form/
-    │   └── index.tsx
-    ├── Delete[Entity]Button/
-    │   └── index.tsx
-    ├── loaders/
-    ├── error/
-    └── empty/
+    ├── [Entity]List/
+    │   └── index.tsx                 ← 'use client', data + toggle state
+    ├── [Entity]CreateDialog.tsx      ← 'use client', Dialog + useCreate[Entity]
+    ├── [Entity]UpdateDialog.tsx      ← 'use client', Dialog + useUpdate[Entity], keyed by id
+    └── [Entity]DeleteDialog.tsx      ← 'use client', AlertDialog + useDelete[Entity]
 ```
 
-Pages go in `src/app/[entity]s/page.tsx` and `src/app/[entity]s/[id]/page.tsx` (scaffold with CLI). Hooks exist in `src/features/[entity]/hooks/` (created by next-backend-architect).
+Data flow:
+```
+page.tsx → Hydrate[Entity]s → [Entity]View → ErrorBoundary → Suspense → [Entity]List
+                                                                              ↓ toggles
+                                                                   [Entity]FormCreate
+                                                                   [Entity]FormUpdate
+```
+
+UI behavior:
+- List shows short data per row (ID + schema fields) to validate data loads
+- "Create [Entity]" button shows `[Entity]FormCreate` inline (no dialog)
+- "Edit" button per row shows `[Entity]FormUpdate` inline (no dialog)
+- "Delete" button per row calls the delete mutation directly
 
 ---
 
-## Data Flow
-
-```
-page.tsx → Hydrate (prefetch) → [Entity]View (container mx-auto p-6) → ErrorBoundary → Suspense → [Entity]Table (client hook)
-```
-
-For multi-entity views, see `reference/multi-hydration.md`.
-
----
-
-## Connect App to Views (pages)
-
-### CLI (preferred)
+## CLI
 
 ```bash
-./scripts/main.sh <target> <entity> --page list      # List page
-./scripts/main.sh <target> <entity> --page detail    # Detail page
-./scripts/main.sh <target> <entity> --view-full      # Views + components
-./scripts/main.sh <target> <entity> --all            # Pages + views + components
+./scripts/main.sh <target> <entity> --page list      # File 1 only
+./scripts/main.sh <target> <entity> --view           # File 2 only
+./scripts/main.sh <target> <entity> --view-full      # Files 2–5
+./scripts/main.sh <target> <entity> --all            # Files 1–5
 ```
 
-### Template-driven (fallback)
-
-Use `assets/list-page.md` or `assets/detail-page.md` and replace `[Entity]`/`[entity]` placeholders.
-
----
-
-## Transport Detection
-
-The CLI auto-detects transport from existing hooks. Override with:
-
-```bash
-./scripts/main.sh . Product --all --transport api
-```
+Transport is auto-detected from existing hooks. Override: `--transport api`
 
 Detection cues:
 - **tRPC:** `useTRPC()`, `trpc.[entity].list.queryOptions()`
-- **REST API:** `apiFetch`, `apiPrefetch`, raw fetch
+- **REST:** `apiFetch`, `apiPrefetch`, raw fetch
 
 ---
 
-## Verify & Validate
+## Verify
 
-After scaffolding:
-
-1. **Imports resolve:** Run `npx tsc --noEmit`. If hooks are missing: `ls src/features/[entity]/hooks/` → run next-backend-architect → re-run tsc.
-2. **Render:** Start dev server and navigate to the page. Check for rendering errors in browser console.
-3. **Data flow:** Verify data loads correctly in Network tab (API calls) or React DevTools (hook state).
-
-The CLI outputs descriptive errors with recovery steps for any scaffolding failures.
+1. `npx tsc --noEmit` — check all imports resolve. If hooks are missing, run `next-backend-architect` first.
+2. Start dev server → navigate to the page → check browser console for errors.
+3. Click "Create [Entity]" → form appears inline. Fill fields, submit, revalidate data and confirm data appears in list.
+4. Click "Edit" → update form appears inline with current values. Submit and revalidate data.
+5. Click "Delete" → revalidate data.
 
 ---
 
 ## Notes
 
-- REST API: `src/lib/api.ts` required; see next-backend-architect docs for config.
-- Loaders/error components are minimal; add styling/spinners as needed.
-- Multi-entity views: `reference/multi-hydration.md`. Form logic: `reference/component-logic.md`.
+- Multi-entity views (e.g. products + categories on one page): `reference/multi-hydration.md`
+- Component logic patterns (where mutations live): `reference/component-logic.md`
+- REST API requires `src/lib/api.ts` — see `next-backend-architect` docs for setup
