@@ -5,8 +5,8 @@ import { useTRPC } from "@/trpc/client"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useForm } from "@tanstack/react-form"
 import { toast } from "sonner"
-import { createProductSchema } from "../schema/product.schema"
-import type { CreateProductInput } from "../schema/product.schema"
+import { createProductSchema } from "../schemas/product.schema"
+import type { CreateProductInput } from "../schemas/product.schema"
 
 type UseCreateProductProps = {
   onSuccess?: () => void
@@ -33,7 +33,7 @@ const useCreateProduct = ({ onSuccess, onError }: UseCreateProductProps = {}) =>
   const form = useForm({
     defaultValues: {
       name: "",
-      description: undefined,
+      description: null,
       price: 0,
       stock: 0,
     } as CreateProductInput,

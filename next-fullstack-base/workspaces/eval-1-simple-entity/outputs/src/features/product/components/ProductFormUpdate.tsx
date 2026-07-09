@@ -1,4 +1,5 @@
 "use client"
+import { Field } from "@tanstack/react-form"
 import useUpdateProduct from "../../hooks/useUpdateProduct"
 import type { Product } from "../../schemas/product.schema"
 
@@ -14,60 +15,78 @@ const ProductFormUpdate = ({ product, onClose }: ProductFormUpdateProps) => {
         onSubmit={(e) => { e.preventDefault(); e.stopPropagation(); form.handleSubmit() }}
         className="grid gap-3"
       >
-        <form.Field name="name">
-          {(field) => (
-            <div className="grid gap-1">
-              <label className="text-sm font-medium">Name</label>
+        <Field
+          name="name"
+          children={(field) => (
+            <div className="grid gap-1.5">
+              <label className="text-sm font-medium">Name *</label>
               <input
-                className="rounded border px-2 py-1.5 text-sm"
-                value={field.state.value ?? ""}
-                onChange={(e) => field.handleChange(e.target.value)}
+                {...field.getInputProps()}
+                className="rounded border px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                placeholder="Product name"
               />
+              {field.meta.errors.length > 0 && (
+                <p className="text-xs text-red-600">{field.meta.errors[0]}</p>
+              )}
             </div>
           )}
-        </form.Field>
-        <form.Field name="description">
-          {(field) => (
-            <div className="grid gap-1">
+        />
+        <Field
+          name="description"
+          children={(field) => (
+            <div className="grid gap-1.5">
               <label className="text-sm font-medium">Description</label>
               <textarea
-                className="rounded border px-2 py-1.5 text-sm"
-                value={field.state.value ?? ""}
-                onChange={(e) => field.handleChange(e.target.value || undefined)}
+                {...field.getInputProps()}
+                className="rounded border px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                 rows={3}
+                placeholder="Product description"
               />
+              {field.meta.errors.length > 0 && (
+                <p className="text-xs text-red-600">{field.meta.errors[0]}</p>
+              )}
             </div>
           )}
-        </form.Field>
-        <form.Field name="price">
-          {(field) => (
-            <div className="grid gap-1">
-              <label className="text-sm font-medium">Price</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                className="rounded border px-2 py-1.5 text-sm"
-                value={field.state.value ?? 0}
-                onChange={(e) => field.handleChange(parseFloat(e.target.value))}
-              />
-            </div>
-          )}
-        </form.Field>
-        <form.Field name="stock">
-          {(field) => (
-            <div className="grid gap-1">
-              <label className="text-sm font-medium">Stock</label>
-              <input
-                type="number"
-                min="0"
-                className="rounded border px-2 py-1.5 text-sm"
-                value={field.state.value ?? 0}
-                onChange={(e) => field.handleChange(parseInt(e.target.value, 10))}
-              />
-            </div>
-          )}
-        </form.Field>
+        />
+        <div className="grid grid-cols-2 gap-3">
+          <Field
+            name="price"
+            children={(field) => (
+              <div className="grid gap-1.5">
+                <label className="text-sm font-medium">Price *</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  {...field.getInputProps()}
+                  className="rounded border px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  placeholder="0.00"
+                />
+                {field.meta.errors.length > 0 && (
+                  <p className="text-xs text-red-600">{field.meta.errors[0]}</p>
+                )}
+              </div>
+            )}
+          />
+          <Field
+            name="stock"
+            children={(field) => (
+              <div className="grid gap-1.5">
+                <label className="text-sm font-medium">Stock</label>
+                <input
+                  type="number"
+                  min="0"
+                  {...field.getInputProps()}
+                  className="rounded border px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  placeholder="0"
+                />
+                {field.meta.errors.length > 0 && (
+                  <p className="text-xs text-red-600">{field.meta.errors[0]}</p>
+                )}
+              </div>
+            )}
+          />
+        </div>
         <div className="flex justify-end gap-2 pt-1">
           <button
             type="button"

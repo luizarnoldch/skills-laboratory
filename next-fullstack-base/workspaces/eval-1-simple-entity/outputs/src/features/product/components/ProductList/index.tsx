@@ -6,25 +6,11 @@ import type { Product } from "../../schemas/product.schema"
 import ProductFormCreate from "../ProductFormCreate"
 import ProductFormUpdate from "../ProductFormUpdate"
 
-type ProductDeleteButtonProps = { productId: string }
-
-const ProductDeleteButton = ({ productId }: ProductDeleteButtonProps) => {
-  const { mutate, isPending } = useDeleteProduct({ productId })
-  return (
-    <button
-      onClick={() => mutate()}
-      disabled={isPending}
-      className="text-xs text-red-600 underline hover:no-underline disabled:opacity-50"
-    >
-      {isPending ? "Deleting..." : "Delete"}
-    </button>
-  )
-}
-
 const ProductList = () => {
   const { products } = useSuspenseListProducts()
   const [showCreate, setShowCreate] = useState(false)
   const [editing, setEditing] = useState<Product | null>(null)
+  const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct()
 
   return (
     <div className="grid gap-4">
@@ -47,22 +33,24 @@ const ProductList = () => {
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border-b bg-gray-50">
+              <th className="px-3 py-2 text-left font-medium text-gray-600">ID</th>
               <th className="px-3 py-2 text-left font-medium text-gray-600">Name</th>
               <th className="px-3 py-2 text-left font-medium text-gray-600">Description</th>
               <th className="px-3 py-2 text-right font-medium text-gray-600">Price</th>
               <th className="px-3 py-2 text-right font-medium text-gray-600">Stock</th>
-              <th className="px-3 py-2 text-left font-medium text-gray-600">ID</th>
+              <th className="px-3 py-2 text-left font-medium text-gray-600">Created At</th>
               <th className="px-3 py-2 text-right font-medium text-gray-600">Actions</th>
             </tr>
           </thead>
           <tbody>
             {products.map((product) => (
               <tr key={product.id} className="border-b hover:bg-gray-50">
-                <td className="px-3 py-2 font-medium">{product.name}</td>
-                <td className="max-w-xs truncate px-3 py-2 text-gray-500">{product.description ?? "—"}</td>
+                <td className="px-3 py-2 font-mono text-xs text-gray-500">{product.id}</td>
+                <td className="px-3 py-2">{product.name}</td>
+                <td className="px-3 py-2 text-gray-500">{product.description ?? "-"}</td>
                 <td className="px-3 py-2 text-right">${product.price.toFixed(2)}</td>
                 <td className="px-3 py-2 text-right">{product.stock}</td>
-                <td className="px-3 py-2 font-mono text-xs text-gray-400">{product.id}</td>
+                <td className="px-3 py-2 text-gray-500 text-xs">{new Date(product.createdAt).toLocaleDateString()}</td>
                 <td className="px-3 py-2 text-right">
                   <div className="flex justify-end gap-3">
                     <button
@@ -71,7 +59,13 @@ const ProductList = () => {
                     >
                       Edit
                     </button>
-                    <ProductDeleteButton productId={product.id} />
+                    <button
+                      onClick={() => deleteProduct({ productId: product.id })}
+                      disabled={isDeleting}
+                      className="text-xs text-red-600 underline hover:no-underline disabled:opacity-50"
+                    >
+                      Delete
+                    </button>
                   </div>
                 </td>
               </tr>
