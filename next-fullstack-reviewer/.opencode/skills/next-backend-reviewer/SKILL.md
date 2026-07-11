@@ -91,6 +91,8 @@ Only check if transport is REST (user says "REST" or "API route").
 
 ### 4. Service (`server/[entity].service.ts`)
 
+Only check if transport is tRPC (the default).
+
 - [ ] Imports repository with `* as [entity]Repository`.
 - [ ] Imports `Create[Entity]Input`, `Update[Entity]Input` from `../schemas/[entity].schema`.
 - [ ] Exports `list()`, `get(id)`, `create(data)`, `update(id, data)`, `remove(id)`.
@@ -101,11 +103,12 @@ Only check if transport is REST (user says "REST" or "API route").
 
 ### 5. Repository (`server/[entity].repository.ts`)
 
-- [ ] Imports `db` from `@/lib/db`.
+Only check if transport is tRPC (the default).
+
+- [ ] Imports `prisma` from `@/lib/prisma`.
 - [ ] Imports `Create[Entity]Input`, `Update[Entity]Input` from `../schemas/[entity].schema`.
 - [ ] Exports `findAll`, `findById`, `findByName`, `create`, `update`, `remove`.
-- [ ] `findAll` returns `db.[entityTable].findMany({ orderBy: { createdAt: "desc" } })`.
-- [ ] Methods use the Prisma/Drizzle client exactly as shown in the `prisma-repository.md` / `drizzle-repository.md` templates.
+- [ ] `findAll` returns `prisma.[entityTable].findMany({ orderBy: { createdAt: "desc" } })`.
 - [ ] No logic beyond delegation to the ORM client.
 
 ### 6. Hooks (tRPC — common checks)
