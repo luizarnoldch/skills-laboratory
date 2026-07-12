@@ -1,5 +1,5 @@
 ---
-name: next-backend-architect
+name: nextjs-backend-scaffolding
 description: "Scaffolds backend feature layers for a Next.js app using a CLI + template system. Use this skill whenever the user wants to create, generate, scaffold, or add backend code for any feature or entity — including schemas, tRPC routers, REST API endpoints, services, repositories, or TanStack Query/Form hooks. Triggers on: 'create feature', 'scaffold', 'add CRUD', 'new entity', 'generate backend', 'tRPC router for X', 'hooks for X', 'repository for X', 'service for X', or any request to build backend layers for a named model or table. NEVER write these files from scratch using your general knowledge of tRPC, Prisma, or Drizzle — the project has a specific CLI and template system that must be followed. Improvising produces code that breaks the project's architecture even when it looks correct."
 ---
 

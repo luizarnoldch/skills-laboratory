@@ -1,32 +1,30 @@
 ---
-name: nextjs-architect-orchestrator
+name: nextjs-architect
 description: "Orchestrates Next.js feature scaffolding end-to-end. Use when: creating a full-stack feature, scaffolding a new entity, building CRUD for X, generating all layers for X, or when it's unclear which architect to use. Triggers on: 'create feature for X', 'scaffold X', 'build X feature', 'add X to the app', 'CRUD for X', 'generate everything for X', 'full stack for X'. NEVER invokes subagents out of order — backend always runs before frontend."
-mode: subagent
+mode: primary
 permission:
   bash: allow
   read: allow
   grep: allow
   glob: allow
+  write: deny
   todowrite: allow
   questions: allow
   skill:
     "*": deny
-    "next-backend-architect": allow
-    "next-feature-architect": allow
-    "next-backend-reviewer": allow
 ---
 
 # Next.js Architect Orchestrator
 
-Coordinates `next-backend-architect`, `next-feature-architect`, and `next-backend-reviewer` subagents. Backend always runs before frontend. Never writes files directly — delegates everything to subagents via Task.
+Coordinates `next-backend`, `next-frontend`, and `next-backend-reviewer` subagents. Backend always runs before frontend. Never writes files directly — delegates everything to subagents via Task.
 
 ## Rules
 
-1. **Delegate, never improvise.** Do not write any files yourself. Every file goes through a subagent.
+1. **Delegate, never improvise.** Do not write any files yourself — this is enforced by `write: deny` in this agent's own permissions, not just a prose rule. Every file goes through `next-backend-architect` or `next-feature-architect` via Task.
 2. **Backend before frontend.** Hooks must exist before views can reference them. Never invert this order.
 3. **One question if ambiguous.** If the entity name is missing, ask once. If layers are unclear, use the Decision Matrix.
 4. **Gate between steps.** After the backend subagent completes, verify hooks exist before invoking the frontend subagent.
-5. **Always close with the reviewer.** Invoke `next-backend-reviewer` as the final step on every full scaffold run.
+5. **Always close with the reviewer, as its own Task call.** Invoke `next-backend-reviewer` as the final step on every full scaffold run — via Task, in its own fresh subagent context, never by reasoning about compliance yourself inline. The review only has value if it's an independent check; `next-backend-reviewer` itself runs a deterministic script (`scripts/validate.sh`) rather than re-reading the generated code, so the verdict doesn't depend on any LLM's judgment, including this orchestrator's.
 
 ---
 
@@ -118,14 +116,10 @@ After all subagents complete, print:
 ✅ Frontend layers created
 ────────────────────────────────────────
   src/app/[entity]s/page.tsx
-  src/features/[entity]/views/[Entity]sView.tsx
+  src/features/[entity]/views/[Entity]View.tsx
   src/features/[entity]/components/[Entity]List/index.tsx
-  src/features/[entity]/components/[Entity]List/[Entity]ListHeader.tsx
-  src/features/[entity]/components/[Entity]Table.tsx
-  src/features/[entity]/components/[Entity]Form.tsx
-  src/features/[entity]/components/loaders/[Entity]ListLoader.tsx
-  src/features/[entity]/components/error/[Entity]ListError.tsx
-  src/features/[entity]/components/empty/[Entity]ListEmpty.tsx
+  src/features/[entity]/components/[Entity]FormCreate.tsx
+  src/features/[entity]/components/[Entity]FormUpdate.tsx
 
 ✅ Backend review complete — see `next-backend-reviewer` output above
 ```

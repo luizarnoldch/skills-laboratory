@@ -1,5 +1,5 @@
 ---
-name: next-feature-architect
+name: nextjs-frontend-scaffolding
 description: "Creates and maintains Next.js frontend features: pages, components, views, and hook integrations with server-side data prefetching, Suspense boundaries, and mutations. Use this skill when: building React components (.tsx), creating Next.js pages with app router, implementing TanStack Query hooks, adding Suspense and error boundaries, building forms and mutations, configuring server-side rendering (SSR)."
 ---
 # Next.js Feature Architect

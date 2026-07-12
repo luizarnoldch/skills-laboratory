@@ -33,8 +33,10 @@ All agent definitions are in `.opencode/agents/`.
 
 | Agent | What it does | When it triggers |
 |---|---|---|
-| `nextjs-architect-orchestrator` | Routes your request to the right subagent. Enforces **backend-before-frontend**. | Auto-triggered on: "create feature for X", "scaffold X", "build X feature", "CRUD for X", "full stack for X" |
-| `next-backend-reviewer` | Reads generated files, runs `tsc --noEmit`, and reports **PASS/FAIL** with fix instructions. | Auto-triggered by the orchestrator after every scaffold run. Never writes files. |
+| `nextjs-architect-orchestrator` | Routes your request to the right subagent. Enforces **backend-before-frontend**. Read-only + `write: deny` — never writes files itself, only delegates via Task. | Auto-triggered on: "create feature for X", "scaffold X", "build X feature", "CRUD for X", "full stack for X" |
+| `next-backend-architect` | Thin Task-invocable wrapper around the `next-backend-architect` skill. Has `write: allow`. Scaffolds schema/router/service/repository/hooks via the project's CLI + templates. | Invoked by the orchestrator via Task — never call the skill directly, it has no permissions of its own. |
+| `next-feature-architect` | Thin Task-invocable wrapper around the `next-feature-architect` skill. Has `write: allow`. Scaffolds pages/views/components wired to existing backend hooks. | Invoked by the orchestrator via Task, after the backend gate passes. |
+| `next-backend-reviewer` | Runs the `next-backend-reviewer` skill's `scripts/validate.sh` (a deterministic bash script, not LLM judgment) against generated files, optionally runs `tsc --noEmit`, and reports **PASS/FAIL** with fix instructions. Read-only — `write: deny`. | Auto-triggered by the orchestrator, as its own Task call, after every scaffold run. |
 | `product-manager` | Turn an idea into a structured PRD (`specs/*.md`) and a `FEATURES.yml` registry entry. | Auto-triggered on: "I want a new feature", "plan X", "idea for X" |
 
 ### Skills
@@ -44,9 +46,11 @@ All skill definitions are in `.opencode/skills/`.
 | Skill | What it does | When it triggers |
 |---|---|---|
 | `prd-writer` | Provides the PRD template, EARS acceptance criteria format, and writing rules. | Loaded by `product-manager` automatically; never invoked directly. |
-| `next-backend-architect` | Scaffolds backend layers (schema, router/service/repository, hooks) from project-specific templates in `assets/`. | Invoked by the orchestrator. Never write backend files manually — use this skill. |
-| `next-feature-architect` | Scaffolds frontend layers (pages, views, components, loaders, error states) with Suspense + SSR. | Invoked by the orchestrator after backend hooks exist. |
-| `next-backend-reviewer` | Reads the full `SKILL.md` checklist and reference docs to validate generated backend files against the template system. | Invoked by the orchestrator or manually with `opencode run -a next-backend-reviewer`. |
+| `next-backend-architect` | Scaffolds backend layers (schema, router/service/repository, hooks) from project-specific templates in `assets/`. | Loaded by the `next-backend-architect` **agent** (same name) — that agent is what the orchestrator Tasks; the skill itself has no write permission and is never Task-invoked directly. |
+| `next-feature-architect` | Scaffolds frontend layers (page, view, list component, create/update forms) with Suspense + SSR. | Loaded by the `next-feature-architect` **agent** (same name), after backend hooks exist. |
+| `next-backend-reviewer` | Documents the target file layout and report format, and points to `scripts/validate.sh` — a bash script that does the actual per-layer PASS/FAIL checking (no LLM judgment involved). | Loaded by the `next-backend-reviewer` **agent** (same name), which runs the script and formats its output. |
+
+> Every skill above (except `prd-writer`) has a same-named agent in `.opencode/agents/` that wraps it with the runtime permissions (`write`, `bash`) the skill's work requires, and is what actually gets Task-invoked. Skills themselves carry no permissions and are not directly Task-addressable.
 
 ---
 
@@ -174,14 +178,10 @@ opencode run -a nextjs-architect-orchestrator \
 **Output:**
 ```
 src/app/products/page.tsx
-src/features/product/views/ProductsView.tsx
+src/features/product/views/ProductView.tsx
 src/features/product/components/ProductList/index.tsx
-src/features/product/components/ProductList/ProductListHeader.tsx
-src/features/product/components/ProductTable.tsx
-src/features/product/components/ProductForm.tsx
-src/features/product/components/loaders/ProductListLoader.tsx
-src/features/product/components/error/ProductListError.tsx
-src/features/product/components/empty/ProductListEmpty.tsx
+src/features/product/components/ProductFormCreate.tsx
+src/features/product/components/ProductFormUpdate.tsx
 ```
 
 ---
@@ -195,7 +195,7 @@ This step runs **automatically** after scaffolding finishes. You don't need to a
    ```
    Task: "Review backend layers for Product. Scope: --backend."
    ```
-2. The reviewer loads its skill checklist, reads every generated file, and runs `tsc --noEmit`.
+2. The reviewer loads its skill, runs `scripts/validate.sh` (a deterministic bash script — the check itself is not an LLM judgment call), and optionally `tsc --noEmit`.
 
 **If PASS:**
 ```markdown
@@ -262,11 +262,11 @@ opencode run -s next-backend-architect "Generate hooks for Product"
 - **Auto-detects:** ORM (Prisma vs Drizzle) by looking for `schema.prisma` or `drizzle.config.*`. Transport defaults to `trpc` unless you say "REST" or "API route".
 
 ### `next-backend-reviewer`
-- **Read-only.** It cannot create, edit, or delete files.
-- **Runs type checks.** Executes `npx tsc --noEmit` when `tsconfig.json` exists.
-- **Matches templates.** Deviations from `next-backend-architect/assets/` templates are flagged as failures.
+- **Read-only.** It cannot create, edit, or delete files (`write: deny`).
+- **Script-driven, not LLM-judged.** Runs `scripts/validate.sh`, which greps generated files against the actual `next-backend-architect/assets/` templates. The PASS/FAIL verdict is deterministic — the agent formats the script's output, it doesn't re-derive compliance itself.
+- **Runs type checks.** Passes `--typecheck` to the script when `tsconfig.json` exists, which runs `npx tsc --noEmit`.
+- **REST-aware.** Knows `service.ts`/`repository.ts` don't exist under REST transport (REST's `<entity>.api.ts` is a client wrapper calling an external API, not a hosted route handler) — it doesn't check for files that were never meant to exist.
 - **Reports structure:**
-  - File structure table (expected vs found)
   - Layer results table (schema, router, service, repository, hooks)
   - Required fixes (file, issue, how to fix)
   - Type check result
@@ -287,8 +287,12 @@ opencode run -s next-backend-architect "Generate hooks for Product"
 
 ### `next-feature-architect`
 - **Works with existing hooks.** It reads `src/features/[entity]/hooks/` to understand mutation signatures.
-- **Suspense-first.** All list views use `useSuspenseQuery` + `HydrationBoundary`.
+- **Suspense-first.** All list views use `useSuspenseQuery`, hydrated via `HydrateClient` + `prefetch()` (tRPC) or `apiPrefetch()` (REST) — not `HydrationBoundary`/`dehydrate`.
 - **Never reverses order.** It will error if hooks don't exist yet.
+
+### `next-backend-reviewer`
+- **Owns `scripts/validate.sh`.** All layer-compliance logic lives in `scripts/checks/*.sh`, not in prose — SKILL.md documents the file layout and report format, and points to the script as the single source of truth.
+- **Never duplicate checks in prose.** If a check needs to change, edit the script. Keeping a parallel written checklist is what caused the reviewer to drift out of sync with the real templates before (e.g. checking for `prisma`/`@/lib/prisma` when every template actually imports `db` from `@/lib/db`).
 
 ### `prd-writer`
 - **Template provider.** Loaded automatically by `product-manager`.
@@ -313,7 +317,7 @@ Tell the orchestrator explicitly:
 opencode run -a nextjs-architect-orchestrator \
   "Scaffold Product backend with REST API transport"
 ```
-The orchestrator forwards `Transport: api` to `next-backend-architect`, which then uses `router-rest.md` and `hooks-rest.md` templates.
+The orchestrator forwards `Transport: api` to `next-backend-architect`, which then uses `assets/api-server.md` (a client wrapper calling an external API via `apiFetch` — not a hosted route handler) and the `assets/*-api-hook.md` templates. Note REST transport has no `service.ts`/`repository.ts` — only `<entity>.api.ts`.
 
 ### "Reviewer says 'mixed transport detected'"
 Some hook files import `useTRPC` while the router is REST (or vice versa). The orchestrator will re-invoke the backend architect with the correct transport to regenerate all layers consistently.
@@ -324,14 +328,18 @@ Some hook files import `useTRPC` while the router is REST (or vice versa). The o
 
 | File | Description |
 |---|---|
-| `.opencode/agents/next-full-stack-base.md` | Orchestrator agent definition |
-| `.opencode/agents/next-backend-reviewer.md` | Reviewer subagent definition |
+| `.opencode/agents/nextjs-architect-orchestrator.md` | Orchestrator agent definition (`write: deny` — delegates everything via Task) |
+| `.opencode/agents/next-backend-architect.md` | Backend scaffold subagent definition (`write: allow`, wraps the skill below) |
+| `.opencode/agents/next-feature-architect.md` | Frontend scaffold subagent definition (`write: allow`, wraps the skill below) |
+| `.opencode/agents/next-backend-reviewer.md` | Reviewer subagent definition (`write: deny`, runs the skill's `scripts/validate.sh`) |
 | `.opencode/agents/product-manager.md` | Product manager agent definition |
-| `.opencode/skills/next-backend-architect/SKILL.md` | Backend scaffold skill |
+| `.opencode/skills/next-backend-architect/SKILL.md` | Backend scaffold skill (decision flow, CLI usage, template fallback) |
+| `.opencode/skills/next-backend-architect/scripts/main.sh` | Backend architect CLI entry point |
+| `.opencode/skills/next-backend-architect/assets/` | Template files used by the backend architect |
 | `.opencode/skills/next-feature-architect/SKILL.md` | Frontend scaffold skill |
-| `.opencode/skills/next-backend-reviewer/SKILL.md` | Backend review skill |
+| `.opencode/skills/next-feature-architect/scripts/main.sh` | Frontend architect CLI entry point |
+| `.opencode/skills/next-backend-reviewer/SKILL.md` | Backend review skill (file layout + report format; points to the script below) |
+| `.opencode/skills/next-backend-reviewer/scripts/validate.sh` | Deterministic per-layer validation script — the actual PASS/FAIL logic |
 | `.opencode/skills/prd-writer/SKILL.md` | PRD writing skill |
-| `scripts/main.sh` | Backend architect CLI entry point |
-| `assets/` | Template files used by backend architect |
-| `FEATURES.yml` | Feature registry managed by product-manager |
+| `FEATURES.yml` | Feature registry managed by product-manager (created on first PRD if missing) |
 | `specs/` | PRD output directory |

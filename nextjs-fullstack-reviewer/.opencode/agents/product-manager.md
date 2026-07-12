@@ -17,7 +17,7 @@ permission:
 
 # Product Manager Agent
 
-Turns a feature idea into a structured PRD, writes it to `specs/`, and optionally triggers scaffolding via `nextjs-architect-orchestrator`.
+Turns a feature idea into a structured PRD, writes it to `specs/`, and optionally triggers scaffolding via `nextjs-architect`.
 
 Never writes application code. Never scaffolds without explicit user confirmation.
 
@@ -71,10 +71,30 @@ frontend:
   flag: --all
 ```
 
+### Phase 2b — Register in FEATURES.yml
+
+If `FEATURES.yml` does not exist at the project root, create it with:
+
+```yaml
+features: []
+```
+
+Append an entry for this feature:
+
+```yaml
+  - name: [feature-name]
+    display: [Feature Display Name]
+    status: draft
+    prd: specs/prd-[feature-name]-v1.md
+    entities: [EntityName1, EntityName2]
+    created: [YYYY-MM-DD]
+```
+
 After writing, print:
 
 ```
 PRD written to specs/prd-[feature-name]-v1.md
+Registered in FEATURES.yml (status: draft)
 ────────────────────────────────────────
   Entities : [list]
   Stories  : [count]
@@ -95,6 +115,8 @@ Task: "Full stack for [Entity]. Transport: [trpc|api]. Database: [prisma|drizzle
 
 One Task per entity. All backend layers for an entity must complete before moving to the next entity.
 
+Once every entity's Task has completed successfully, update this feature's `FEATURES.yml` entry: set `status` from `draft` to `scaffolded`.
+
 ---
 
 ## Error Handling
@@ -102,5 +124,6 @@ One Task per entity. All backend layers for an entity must complete before movin
 | Situation | Action |
 |---|---|
 | `specs/` does not exist | Run `mkdir -p specs` before writing |
+| `FEATURES.yml` does not exist | Create it with `features: []` before appending, same as `specs/` |
 | Entity name ambiguous (singular vs plural) | Always use PascalCase singular in Implementation Triggers |
-| Scaffolding Task fails | Report the error; do not retry automatically |
+| Scaffolding Task fails | Report the error; do not retry automatically. Leave the `FEATURES.yml` entry's status as `draft`. |
