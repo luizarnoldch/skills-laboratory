@@ -13,10 +13,10 @@ description: "Creates and maintains Next.js frontend features: pages, components
 3. **Hooks stay in entrypoints.** Only `[Entity]List/index.tsx` calls hooks; sub-components receive props.
 4. **Types and style.** Use `type` for Props (never `interface`). Arrow functions. `export default`.
 5. **Default: suspense.** Use `useSuspenseList[Entity]s`. Fall back to `useList[Entity]s` only if explicitly requested.
-6. **Never read `@/components/ui/*` files.** shadcn APIs are stable — import <Button>, <Input>, <Dialog>, <AlertDialog>, <Table>, <Badge>, <Spinner> directly without inspection.
+6. **Never read `@/components/ui/*` files.** shadcn APIs are stable — import `<Button>`, `<Input>`, `<Dialog>`, `<AlertDialog>`, `<Table>`, `<Badge>`, `<Spinner>` directly without inspection.
 7. **Read only `schemas/[entity].schema.ts` and `hooks/*.tsx`** to understand an entity. Skip server files.
 8. **Never conditionally call hooks.** For create vs update forms, use separate components (`[Entity]FormCreate`, `[Entity]FormUpdate`).
-9. **Never spawn a sub-agent for exploration.** Read these exact files directly,in this order, then stop:
+9. **Never spawn a sub-agent for exploration.** Read these exact files directly, in this order, then stop:
   - schemas/[entity].schema.ts
   - hooks/useSuspenseList[Entity]s.tsx
   - hooks/useCreate[Entity].tsx
@@ -44,7 +44,7 @@ Generate exactly these 5 files for `<entity>`:
 | 5 | `src/features/[entity]/components/[Entity]FormUpdate.tsx` |
 
 **Layer flags:**
-- `--page` → file 1 only
+- `--page list` → file 1 only
 - `--view` → file 2 only
 - `--view-full` → files 2–5
 - `--all` → files 1–5
@@ -69,9 +69,9 @@ src/features/[entity]/
 Data flow:
 ```
 page.tsx → Hydrate[Entity]s → [Entity]View → ErrorBoundary → Suspense → [Entity]List
-                                                                              ↓ toggles
-                                                                   [Entity]FormCreate
-                                                                   [Entity]FormUpdate
+↓ toggles
+[Entity]FormCreate
+[Entity]FormUpdate
 ```
 
 UI behavior:
@@ -101,7 +101,7 @@ Detection cues:
 
 ## Verify
 
-1. `npx tsc --noEmit` — check all imports resolve. If hooks are missing, run `next-backend-architect` first.
+1. `npx tsc --noEmit` — check all imports resolve. If hooks are missing, run `next-backend` agent first.
 2. Start dev server → navigate to the page → check browser console for errors.
 3. Click "Create [Entity]" → form appears inline. Fill fields, submit, revalidate data and confirm data appears in list.
 4. Click "Edit" → update form appears inline with current values. Submit and revalidate data.
@@ -113,4 +113,4 @@ Detection cues:
 
 - Multi-entity views (e.g. products + categories on one page): `reference/multi-hydration.md`
 - Component logic patterns (where mutations live): `reference/component-logic.md`
-- REST API requires `src/lib/api.ts` — see `next-backend-architect` docs for setup
+- REST API requires `src/lib/api.ts` — run `next-backend` agent for setup
