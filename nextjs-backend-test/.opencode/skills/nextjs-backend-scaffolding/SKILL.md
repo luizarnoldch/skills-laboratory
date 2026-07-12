@@ -33,7 +33,7 @@ The dependency chain (`hooks → server → schema`) is handled by the CLI autom
 
 All output goes under `src/features/[entity]/`:
 
-```
+```sh
 src/features/[entity]/
 ├── schemas/
 │   └── [entity].schema.ts
