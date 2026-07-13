@@ -31,7 +31,9 @@ The dependency chain (`hooks → server → schema`) is handled by the CLI autom
 
 ## Target directory
 
-All output goes under `src/features/[entity]/`:
+All output goes under `src/features/[entity]/`, relative to the resolved
+target project root (see Path resolution below — never assume it's the
+current working directory):
 
 ```sh
 src/features/[entity]/
@@ -51,36 +53,63 @@ src/features/[entity]/
     └── useDelete[Entity].tsx
 ```
 
+## Path resolution
+
+This skill's scripts live inside the skill folder itself, not at the target
+project's root — there is no `scripts/` directory in the Next.js project you
+are scaffolding into. Never invoke `./scripts/main.sh` or a bare
+`scripts/main.sh`; resolve the absolute path first:
+
+1. Get the repo root: `git rev-parse --show-toplevel` (works from any cwd).
+   If that fails (not a git repo), walk upward from the current directory
+   until you find a `.opencode/` directory — its parent is the repo root.
+2. This skill's script is at
+   `<repo-root>/.opencode/skills/nextjs-backend-scaffolding/scripts/main.sh`.
+   Always invoke it by that absolute path.
+3. `<target>` (below) must be the **absolute path** to the Next.js project
+   root. If a calling agent handed you this path already, use it exactly as
+   given — do not recompute or default it.
+
 ## Running the CLI
 
-Use `./scripts/main.sh` from the project root. Compose flags based on what was requested:
+Invoke the script using its absolute path (see Path resolution above).
+Compose flags based on what was requested:
 
 ```bash
+# <skill-dir> = <repo-root>/.opencode/skills/nextjs-backend-scaffolding (see Path resolution)
+
 # Schema only
-./scripts/main.sh <target> <Entity> --schema --database <prisma|drizzle>
+<skill-dir>/scripts/main.sh <target> <Entity> --schema --database <prisma|drizzle>
 
 # Server only (tRPC)
-./scripts/main.sh <target> <Entity> --server --transport trpc --database <prisma|drizzle>
+<skill-dir>/scripts/main.sh <target> <Entity> --server --transport trpc --database <prisma|drizzle>
 
 # Server only (REST)
-./scripts/main.sh <target> <Entity> --server --transport api --database <prisma|drizzle>
+<skill-dir>/scripts/main.sh <target> <Entity> --server --transport api --database <prisma|drizzle>
 
 # Hooks only
-./scripts/main.sh <target> <Entity> --hooks --transport <trpc|api>
+<skill-dir>/scripts/main.sh <target> <Entity> --hooks --transport <trpc|api>
 
 # Full stack
-./scripts/main.sh <target> <Entity> --schema --server --hooks --transport <trpc|api> --database <prisma|drizzle>
+<skill-dir>/scripts/main.sh <target> <Entity> --schema --server --hooks --transport <trpc|api> --database <prisma|drizzle>
 ```
 
-`<target>` is the destination path (e.g. `src/features`). `<Entity>` is PascalCase.
+`<target>` is the **absolute path to the Next.js project root** (the
+directory containing `src/`) — never a subdirectory like `src/features` and
+never a relative path like `.`; the CLI itself appends `src/features/...`
+internally. `<Entity>` is PascalCase.
 
 ## Fallback — when the CLI is unavailable
 
-The CLI is unavailable when `./scripts/main.sh` does not exist or exits with a non-zero code unrelated to arguments.
+The CLI is unavailable when `<skill-dir>/scripts/main.sh` (see Path
+resolution above) does not exist or exits with a non-zero code unrelated to
+arguments.
 
 **Do not improvise. Do not write files from your own knowledge of tRPC or Prisma.**
 
-Template files live in `assets/`. Match your layer and ORM/transport to the correct file:
+Template files live in `<skill-dir>/assets/` — the same absolute skill
+directory resolved above, not the target project. Match your layer and
+ORM/transport to the correct file:
 
 - Schema + Prisma → `assets/prisma-schema.md`
 - Schema + Drizzle → `assets/drizzle-schema.md`
@@ -102,8 +131,11 @@ Template files live in `assets/`. Match your layer and ORM/transport to the corr
 - Hooks REST update → `assets/update-api-hook.md`
 - Hooks REST delete → `assets/delete-api-hook.md`
 
-To apply a template: read the file, copy its content exactly, replace `[Entity]` with PascalCase, `[entity]` with camelCase, `[entityTable]` with snake_case, `[entity-kebab]` with kebab-case, then write to the correct path under `src/features/[entity]/`. Do not add logic or imports beyond what the template contains.
+To apply a template: read the file from `<skill-dir>/assets/...`, copy its content exactly, replace `[Entity]` with PascalCase, `[entity]` with camelCase, `[entityTable]` with snake_case, `[entity-kebab]` with kebab-case, then write to the correct path under `<target>/src/features/[entity]/`. Do not add logic or imports beyond what the template contains.
 
 ## REST transport requirement
 
-If generating REST transport (`--transport api`), the project requires `src/lib/api.ts`. Check if it exists first. If missing, read `references/external-api.md` and create it before generating the server layer.
+If generating REST transport (`--transport api`), the project requires
+`<target>/src/lib/api.ts`. Check if it exists first. If missing, read
+`<skill-dir>/references/external-api.md` and create it before generating the
+server layer.

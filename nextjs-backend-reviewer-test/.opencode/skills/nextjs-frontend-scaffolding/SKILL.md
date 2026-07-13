@@ -6,6 +6,28 @@ description: "Creates and maintains Next.js frontend features: pages, components
 
 **Frontend feature scaffolding — connects `src/app/` pages to hooks via views and components.**
 
+## Path resolution (read first)
+
+This skill's script lives inside the skill folder itself, not at the target
+project's root — there is no `scripts/` directory in the Next.js project you
+are scaffolding into. Never invoke `./scripts/main.sh` or a bare
+`scripts/main.sh`; resolve the absolute path first:
+
+1. Get the repo root: `git rev-parse --show-toplevel` (works from any cwd).
+   If that fails (not a git repo), walk upward from the current directory
+   until you find a `.opencode/` directory — its parent is the repo root.
+2. This skill's script is at
+   `<repo-root>/.opencode/skills/nextjs-frontend-scaffolding/scripts/main.sh`.
+   Always invoke it by that absolute path.
+3. `<target>` (used throughout this file) must be the **absolute path** to
+   the Next.js project root (the directory containing `src/`) — never `.`
+   and never a subdirectory. If a calling agent handed you this path
+   already, use it exactly as given — do not recompute or default it.
+
+Every other file path in this document (e.g. `schemas/[entity].schema.ts`,
+`src/app/[entity]s/page.tsx`) is relative to that resolved absolute target
+root — join it with `<target>` before any Read/Write/Edit call.
+
 ## Rules
 
 1. **Pages are thin.** `page.tsx` renders a view. No business logic.
@@ -27,7 +49,7 @@ These six files contain everything needed. Do not read server files, ui files, o
 
 **When ambiguous, ask:** "List page or detail page?"
 
-**Dependency:** hooks must exist first — run `next-backend-architect` if missing. **Prefer CLI** (`./scripts/main.sh`).
+**Dependency:** hooks must exist first — run `next-backend-architect` if missing. **Prefer CLI** (see Path resolution above).
 
 ---
 
@@ -85,10 +107,12 @@ UI behavior:
 ## CLI
 
 ```bash
-./scripts/main.sh <target> <entity> --page list      # File 1 only
-./scripts/main.sh <target> <entity> --view           # File 2 only
-./scripts/main.sh <target> <entity> --view-full      # Files 2–5
-./scripts/main.sh <target> <entity> --all            # Files 1–5
+# <skill-dir> = <repo-root>/.opencode/skills/nextjs-frontend-scaffolding (see Path resolution)
+
+<skill-dir>/scripts/main.sh <target> <entity> --page list      # File 1 only
+<skill-dir>/scripts/main.sh <target> <entity> --view           # File 2 only
+<skill-dir>/scripts/main.sh <target> <entity> --view-full      # Files 2–5
+<skill-dir>/scripts/main.sh <target> <entity> --all            # Files 1–5
 ```
 
 Transport is auto-detected from existing hooks. Override: `--transport api`
@@ -101,7 +125,7 @@ Detection cues:
 
 ## Verify
 
-1. `npx tsc --noEmit` — check all imports resolve. If hooks are missing, run `next-backend` agent first.
+1. `(cd <target> && npx tsc --noEmit)` — check all imports resolve. If hooks are missing, run `next-backend` agent first.
 2. Start dev server → navigate to the page → check browser console for errors.
 3. Click "Create [Entity]" → form appears inline. Fill fields, submit, revalidate data and confirm data appears in list.
 4. Click "Edit" → update form appears inline with current values. Submit and revalidate data.

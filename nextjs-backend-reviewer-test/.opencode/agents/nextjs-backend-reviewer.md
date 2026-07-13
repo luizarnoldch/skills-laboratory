@@ -23,8 +23,8 @@ Validates backend files produced by `nextjs-backend` by running the project-leve
 
 1. **Read only.** Do not create, modify, or delete any project files. You are strictly an analysis and auditing agent.
 2. **Synchronize with the skill.** Check structural specifications, file mapping requirements, and error patterns against the loaded `nextjs-backend-scaffolding-reviewer` skill context.
-3. **The script determines the verdict.** Run the codebase's local validation script (`scripts/validate.sh`). Do not manually parse and guess compliance by reading the generated code yourself — verdicts must be mechanical, deterministic, and derived directly from the script output to avoid drift.
-4. **Enforce type checking.** Always pass the `--typecheck` flag to the script unless `tsconfig.json` is explicitly verified to be missing from the workspace root.
+3. **The script determines the verdict.** Run the skill's validation script by its resolved absolute path (see Step 2) — never a bare `scripts/validate.sh`. Do not manually parse and guess compliance by reading the generated code yourself — verdicts must be mechanical, deterministic, and derived directly from the script output to avoid drift.
+4. **Enforce type checking.** Always pass the `--typecheck` flag to the script unless `<target>/tsconfig.json` is explicitly verified to be missing.
 5. **Return clean structured reports.** Strip away conversational filler, conversational greetings, or introductory remarks. Output only the final markdown report so that the parent orchestrator (`nextjs-architect`) can cleanly parse the output token streams.
 
 ---
@@ -35,18 +35,25 @@ Validates backend files produced by `nextjs-backend` by running the project-leve
 Extract the following tokens from the incoming orchestrator Task prompt:
 - **Entity name** → PascalCase (e.g., "Product")
 - **Internal folder name** → camelCase (e.g., "product")
-- **Target directory** → Defaults to standard project root (`.`)
-- **Transport type** → Automatically detect from files under `src/features/[entity]/hooks/` (presence of `useTRPC` signals `trpc`; presence of `apiFetch` signals `api`). Fall back to `trpc` if empty or ambiguous.
-- **Database ORM** → Detect from repository calls inside `src/features/[entity]/server/[entity].repository.ts` (`db.[entity].findMany` signals `prisma`; `db.select().from(...)` signals `drizzle`). Fall back to `prisma` if undetected.
+- **Target directory** → The absolute path given in the Task prompt's
+  `Target:` field. This must be an absolute path to the Next.js project root;
+  never default it to `.` — your own working directory is not guaranteed to
+  match the project being reviewed. If the Task prompt omits `Target:`, ask
+  the orchestrator rather than assume one.
+- **Transport type** → Automatically detect from files under `<target>/src/features/[entity]/hooks/` (presence of `useTRPC` signals `trpc`; presence of `apiFetch` signals `api`). Fall back to `trpc` if empty or ambiguous.
+- **Database ORM** → Detect from repository calls inside `<target>/src/features/[entity]/server/[entity].repository.ts` (`db.[entity].findMany` signals `prisma`; `db.select().from(...)` signals `drizzle`). Fall back to `prisma` if undetected.
 
 ### Step 2 — Run the Core Verification Script
-Execute the script located within the workspace repository tree:
+Resolve this skill's absolute script directory (repo root via
+`git rev-parse --show-toplevel`, fallback: walk up to find `.opencode/`,
+then `.opencode/skills/nextjs-backend-scaffolding-reviewer`) and execute the
+script by that absolute path, passing the absolute target from Step 1:
 
 ```bash
-bash scripts/validate.sh . <Entity> --transport <trpc|api> --database <prisma|drizzle> --typecheck
+bash <skill-dir>/scripts/validate.sh <target> <Entity> --transport <trpc|api> --database <prisma|drizzle> --typecheck
 ```
 
-*Drop the `--typecheck` flag only if a root level `tsconfig.json` file is absent.*
+*Drop the `--typecheck` flag only if `<target>/tsconfig.json` is absent.*
 
 ### Step 3 — Compile and Format the Report
 

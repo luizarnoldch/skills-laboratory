@@ -52,6 +52,13 @@ Classify the user request before invoking subagents:
 Extract from the user request:
 - **Entity name** → PascalCase (e.g., "product" or "products" → "Product")
 - **Internal folder name** → camelCase (e.g., "Product" → "product")
+- **Target project root** → Resolve **once**, as an **absolute path**, before
+  invoking any subagent: run `pwd` (or `realpath <path>` if the user gave a
+  path) to get the Next.js project root — the directory containing `src/`.
+  Every Task prompt in this flow must carry this literal absolute path as
+  `Target: <absolute-path>`. Never let a subagent guess, default, or
+  recompute it (not `.`, not `src/features`) — a subagent's own working
+  directory is not guaranteed to match yours.
 - **ORM** → Check for `schema.prisma` or `drizzle.config.ts` via Read/Glob; default to Prisma if unclear.
 - **Transport** → Default to tRPC unless the user explicitly requests "REST" or "API route".
 - **Layers needed** → Reference the Decision Matrix.
@@ -60,13 +67,13 @@ Extract from the user request:
 If backend layers are required, invoke the backend subagent:
 
 ```
-Task: "Generate backend layers for [Entity]. Layers: [schema|server|hooks|all]. Transport: [trpc|api]. Database: [prisma|drizzle]. Target: src/features."
+Task: "Generate backend layers for [Entity]. Layers: [schema|server|hooks|all]. Transport: [trpc|api]. Database: [prisma|drizzle]. Target: <absolute-project-root-path>."
 ```
 
 Once the backend generation subagent completes, you must run the verification gate via the backend reviewer subagent:
 
 ```
-Task: "Validate backend layers for [Entity]. Transport: [trpc|api]. Database: [prisma|drizzle]."
+Task: "Validate backend layers for [Entity]. Transport: [trpc|api]. Database: [prisma|drizzle]. Target: <absolute-project-root-path>."
 ```
 
 #### Evaluating the Gate Verdict:
@@ -74,16 +81,20 @@ Task: "Validate backend layers for [Entity]. Transport: [trpc|api]. Database: [p
 * **If Verdict is FAIL:** Do not proceed to the frontend. Extract the issues from the `Required Fixes` block of the report and issue a remediation task back to the backend subagent:
 
 ```
-Task: "Fix the following issues for [Entity] backend: [Insert specific required fixes from reviewer report]. Keep existing transport ([trpc|api]) and database ([prisma|drizzle])."
+Task: "Fix the following issues for [Entity] backend: [Insert specific required fixes from reviewer report]. Keep existing transport ([trpc|api]) and database ([prisma|drizzle]). Target: <absolute-project-root-path>."
 ```
-After the fix task completes, re-run the `nextjs-backend-reviewer` task. Repeat until the verdict is `PASS`.
+After the fix task completes, re-run the `nextjs-backend-reviewer` task (same `Target:`). Repeat until the verdict is `PASS`.
 
 ### Step 3 — Frontend (if needed)
 Once the backend files are verified, invoke the frontend subagent:
 
 ```
-Task: "Generate frontend layers for [Entity] using flag [--all|--page|--view|--view-full]. Schema and hooks are already validated at src/features/[entity]/."
+Task: "Generate frontend layers for [Entity] using flag [--all|--page|--view|--view-full]. Target: <absolute-project-root-path>. Schema and hooks are already validated at <absolute-project-root-path>/src/features/[entity]/."
 ```
+
+`<absolute-project-root-path>` is the exact same literal path resolved in
+Step 1 — reuse it verbatim in every Task prompt above. Never substitute a
+relative path or let it drift between subagent calls.
 
 ---
 
