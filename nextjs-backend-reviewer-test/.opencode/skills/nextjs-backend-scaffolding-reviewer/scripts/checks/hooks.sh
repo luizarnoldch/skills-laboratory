@@ -1,9 +1,55 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# check_hooks <target> <entity_kebab> <entity_pascal> <entity_camel> <transport>
+_check_hook_default_values() {
+  local hook_file="$1"
+  local expected_fields_str="$2"
+  local hook_label="$3"
+
+  if ! grep -q 'defaultValues:' "$hook_file" 2>/dev/null; then
+    reasons+=("${hook_label}: missing defaultValues object")
+    return 1
+  fi
+
+  if grep -Pzoq '\{[^}]*\[[a-zA-Z]+\]\s*:' "$hook_file" 2>/dev/null; then
+    reasons+=("${hook_label}: defaultValues contains template placeholder keys (e.g. [requiredFields]) -- replace with actual entity fields")
+    return 1
+  fi
+
+  if grep -q '\[defaultValue\]\|\[primitiveInitualValue\]\|\[primitiveInitialValue\]' "$hook_file" 2>/dev/null; then
+    reasons+=("${hook_label}: defaultValues contains template placeholder values (e.g. [defaultValue]) -- replace with actual field init values")
+    return 1
+  fi
+
+  if [[ -z "$expected_fields_str" ]]; then
+    return 0
+  fi
+
+  local hook_fields
+  hook_fields=$(sed -n '/defaultValues:[[:space:]]*{/,/}[[:space:]]*as[[:space:]].*Input/p' "$hook_file" 2>/dev/null \
+    | sed -n 's/^[[:space:]]*\([a-zA-Z_][a-zA-Z0-9_]*\)[[:space:]]*:.*/\1/p' || true)
+
+  [[ -z "$hook_fields" ]] && return 0
+
+  local missing_fields=()
+  while IFS= read -r expected; do
+    [[ -z "$expected" ]] && continue
+    if ! echo "$hook_fields" | grep -qFx "$expected"; then
+      missing_fields+=("$expected")
+    fi
+  done <<< "$expected_fields_str"
+
+  if [[ ${#missing_fields[@]} -gt 0 ]]; then
+    local missing_str
+    missing_str=$(IFS=,; echo "${missing_fields[*]}")
+    reasons+=("${hook_label}: defaultValues missing Prisma model fields: $missing_str")
+  fi
+}
+
+# check_hooks <target> <entity_kebab> <entity_pascal> <entity_camel> <transport> [prisma_file]
 check_hooks() {
   local target="$1" entity_kebab="$2" entity_pascal="$3" entity_camel="$4" transport="$5"
+  local prisma_file="${6:-}"
   local dir="$target/src/features/$entity_kebab/hooks"
   local reasons=()
 
@@ -48,6 +94,21 @@ check_hooks() {
         reasons+=("$(basename "$f") mixes REST transport (apiFetch/apiPrefetch) into a tRPC feature")
       fi
     done
+
+    # --- Prisma model field cross-check for useCreate / useUpdate ---
+    if [[ -n "$prisma_file" && -f "$prisma_file" ]]; then
+      local prisma_create_fields prisma_update_fields
+      prisma_create_fields=$(get_prisma_create_fields "$prisma_file" "$entity_pascal" 2>/dev/null) || true
+      prisma_update_fields=$(get_prisma_update_fields "$prisma_file" "$entity_pascal" 2>/dev/null) || true
+
+      if [[ -n "$prisma_create_fields" ]]; then
+        _check_hook_default_values "$use_create" "$prisma_create_fields" "useCreate${entity_pascal}"
+      fi
+
+      if [[ -n "$prisma_update_fields" ]]; then
+        _check_hook_default_values "$use_update" "$prisma_update_fields" "useUpdate${entity_pascal}"
+      fi
+    fi
 
   elif [[ "$transport" == "api" ]]; then
     require_grep "$hydrate" 'apiPrefetch' "$(basename "$hydrate") must call apiPrefetch({ queryKey, queryFn })" || true

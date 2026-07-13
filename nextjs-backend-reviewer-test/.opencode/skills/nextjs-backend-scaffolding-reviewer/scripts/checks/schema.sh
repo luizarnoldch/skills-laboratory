@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# check_schema <target> <entity_kebab> <entity_pascal> <entity_camel> <database>
+# check_schema <target> <entity_kebab> <entity_pascal> <entity_camel> <database> [prisma_file]
 check_schema() {
   local target="$1" entity_kebab="$2" entity_pascal="$3" entity_camel="$4" database="$5"
+  local prisma_file="${6:-}"
   local file="$target/src/features/$entity_kebab/schemas/$entity_kebab.schema.ts"
   local reasons=()
 
@@ -35,6 +36,50 @@ check_schema() {
   if grep -qE '^[[:space:]]*\.\.\.\s*,?\s*$' "$file"; then
     reasons+=("schema contains the '...' template placeholder -- custom model fields were not filled in (replace '...' with actual entity fields derived from the Prisma model)")
   fi
+
+  # --- Prisma model cross-check ---
+  if [[ -n "$prisma_file" && -f "$prisma_file" && "$database" == "prisma" ]]; then
+    local prisma_fields
+    prisma_fields=$(get_prisma_all_fields "$prisma_file" "$entity_pascal" 2>/dev/null) || true
+    if [[ -n "$prisma_fields" ]]; then
+      # Extract Zod field names from the z.object({...}) block
+      local zod_fields
+      zod_fields=$(sed -n '/z\.object({/,/})/p' "$file" 2>/dev/null \
+        | sed -n '/^[[:space:]]*[a-zA-Z_][a-zA-Z0-9_]*[[:space:]]*:/p' \
+        | sed 's/^[[:space:]]*//; s/[:].*//' || true)
+
+      # Check missing: Prisma fields not in Zod schema
+      local missing_fields=()
+      while IFS= read -r pf; do
+        [[ -z "$pf" ]] && continue
+        if ! echo "$zod_fields" | grep -qFx "$pf"; then
+          missing_fields+=("$pf")
+        fi
+      done <<< "$prisma_fields"
+
+      if [[ ${#missing_fields[@]} -gt 0 ]]; then
+        local missing_str
+        missing_str=$(IFS=,; echo "${missing_fields[*]}")
+        reasons+=("Zod schema missing Prisma model fields: $missing_str")
+      fi
+
+      # Check extra: Zod fields not in Prisma model
+      local extra_fields=()
+      while IFS= read -r zf; do
+        [[ -z "$zf" ]] && continue
+        if ! echo "$prisma_fields" | grep -qFx "$zf"; then
+          extra_fields+=("$zf")
+        fi
+      done <<< "$zod_fields"
+
+      if [[ ${#extra_fields[@]} -gt 0 ]]; then
+        local extra_str
+        extra_str=$(IFS=,; echo "${extra_fields[*]}")
+        reasons+=("Zod schema has fields not in Prisma model: $extra_str")
+      fi
+    fi
+  fi
+  # --- end Prisma cross-check ---
 
   local field_names base_fields
   base_fields='^(id|createdAt|updatedAt|deletedAt)$'

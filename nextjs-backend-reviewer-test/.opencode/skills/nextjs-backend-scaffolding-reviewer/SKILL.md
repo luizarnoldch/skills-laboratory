@@ -87,28 +87,47 @@ Running verification logic requires invoking the script by its absolute path
 (see Path Resolution above), with an absolute `<target-folder>`:
 
 ```bash
-bash <repo-root>/.opencode/skills/nextjs-backend-scaffolding-reviewer/scripts/validate.sh <target-folder> <Entity> --transport <trpc|api> --database <prisma|drizzle> [--typecheck]
+bash <repo-root>/.opencode/skills/nextjs-backend-scaffolding-reviewer/scripts/validate.sh <target-folder> <Entity> --transport <trpc|api> --database <prisma|drizzle> [--prisma-schema <path>] [--typecheck]
 ```
 
-### Schema Custom Fields Validation
+### Prisma Model Field Cross-Validation
 
-For Prisma schemas, the validator checks that entity-specific fields have been filled in beyond the template's base structure. Two conditions trigger a failure:
+When `--prisma-schema <path>` is provided (or auto-detected at `<target>/prisma/schema.prisma`), the validator cross-references generated files against the actual Prisma model definition to catch field-level drift. The Prisma model matching `<Entity>` is parsed and its fields are extracted, classified (auto-generated / required / optional / has-default), and cross-checked against three layers:
+
+#### Schema Field Check (`[entity].schema.ts`)
+- Every field in the Prisma model must appear as a Zod field inside the `z.object({...})` block.
+- Fields present in the Zod schema but not in the Prisma model trigger an extra-fields failure.
+- Fields present in the Prisma model but missing from the Zod schema trigger a missing-fields failure.
+- The `...` placeholder stub and base-only-fields checks still apply (see below).
+
+#### Hook Field Check: `useCreate[Entity]`
+- The `defaultValues` object inside `useForm(...)` is inspected for its keys.
+- **Template placeholder detection**: keys like `[requiredFields]`, `[optionalFields]` or values like `[defaultValue]`, `[primitiveInitualValue]` indicate the template was never filled in — triggers immediate failure.
+- **Model cross-check**: every Prisma field classified as user-provided (non-auto-generated: excludes `id` with `@default(cuid|uuid|autoincrement)`, timestamp fields like `createdAt`/`updatedAt`/`deletedAt`) must be present as a key in `defaultValues`.
+
+#### Hook Field Check: `useUpdate[Entity]`
+- Same template-placeholder detection applies.
+- **Model cross-check**: `id` plus every user-editable Prisma field (excluding DB-managed timestamps) must be present as a key in `defaultValues`.
+
+*For Drizzle schemas, custom fields are auto-derived from the Drizzle table definition via `createSelectSchema`/`createInsertSchema`/`createUpdateSchema`, so explicit field-counting and Prisma-model cross-validation is not applied.*
+
+### Schema Custom Fields Validation (Baseline)
+
+For Prisma schemas without `--prisma-schema`, the validator performs best-effort structural checks:
 
 1. **Placeholder detected** — the `...` template stub is still present in the file, meaning custom fields were never filled in.
-2. **Only base fields** — the `z.object({...})` block contains only `id`, `createdAt`, `updatedAt`, or `deletedAt` fields. At least one entity-specific field (derived from the Prisma model) must be present.
-
-For Drizzle schemas, custom fields are auto-derived from the Drizzle table definition via `createSelectSchema`/`createInsertSchema`/`createUpdateSchema`, so explicit field-counting validation is not applied.
+2. **Only base fields** — the `z.object({...})` block contains only `id`, `createdAt`, `updatedAt`, or `deletedAt` fields. At least one entity-specific field must be present.
 
 ### Script Execution Contracts
 
 The underlying shell scripts scan physical paths and dump strict output flags matching this pattern:
 
 ```
-LAYER:schema:PASS
-LAYER:router:FAIL:Missing delete route in product.router.ts
+LAYER:schema:FAIL:Zod schema missing Prisma model fields: stock;Zod schema has fields not in Prisma model: categoryId
+LAYER:router:PASS
 LAYER:service:PASS
 LAYER:repository:PASS
-LAYER:hooks:PASS
+LAYER:hooks:FAIL:useCreateProduct: defaultValues contains template placeholder keys (e.g. [requiredFields]) -- replace with actual entity fields;useUpdateProduct: defaultValues missing Prisma model fields: description,stock
 TYPECHECK:PASS
 VERDICT:FAIL
 ```

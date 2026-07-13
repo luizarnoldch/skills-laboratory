@@ -50,10 +50,11 @@ then `.opencode/skills/nextjs-backend-scaffolding-reviewer`) and execute the
 script by that absolute path, passing the absolute target from Step 1:
 
 ```bash
-bash <skill-dir>/scripts/validate.sh <target> <Entity> --transport <trpc|api> --database <prisma|drizzle> --typecheck
+bash <skill-dir>/scripts/validate.sh <target> <Entity> --transport <trpc|api> --database <prisma|drizzle> --typecheck --prisma-schema <prisma-schema-path>
 ```
 
 *Drop the `--typecheck` flag only if `<target>/tsconfig.json` is absent.*
+*Drop the `--prisma-schema` flag only if no Prisma schema exists. Auto-detect the path: check `<target>/prisma/schema.prisma` first; if missing, check the eval input path pattern `*/inputs/*.prisma` under the workspace. When Prisma is the database and a schema file is found, always pass it to enable field-level cross-validation.*
 
 ### Step 3 — Compile and Format the Report
 

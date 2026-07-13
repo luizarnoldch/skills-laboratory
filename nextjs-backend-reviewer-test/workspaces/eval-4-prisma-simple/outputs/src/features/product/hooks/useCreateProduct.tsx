@@ -5,8 +5,8 @@ import { useTRPC } from "@/trpc/client"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useForm } from "@tanstack/react-form"
 import { toast } from "sonner"
-import { createProductSchema } from "../schemas/product.schema"
-import type { CreateProductInput } from "../schemas/product.schema"
+import { createProductSchema } from "../schemas/[entity-kebab].schema"
+import type { CreateProductInput } from "../schemas/[entity-kebab].schema"
 
 type UseCreateProductProps = {
   onSuccess?: () => void
