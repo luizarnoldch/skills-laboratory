@@ -22,6 +22,7 @@ const useUpdateProduct = ({ product, onSuccess, onError }: UseUpdateProductProps
     ...trpc.product.update.mutationOptions(),
     onSuccess: async (data) => {
       await queryClient.invalidateQueries(trpc.product.list.queryOptions())
+      await queryClient.invalidateQueries(trpc.product.getById.queryOptions({ id: data.id }))
       toast.success("Product updated successfully")
       onSuccess?.()
     },
@@ -31,11 +32,12 @@ const useUpdateProduct = ({ product, onSuccess, onError }: UseUpdateProductProps
     },
   })
 
+  // product.id is included in UpdateProductInput so tRPC knows which record to update
   const form = useForm({
     defaultValues: {
       id: product.id,
       name: product.name,
-      description: product.description,
+      description: product.description ?? "",
       price: product.price,
       stock: product.stock,
     } as UpdateProductInput,

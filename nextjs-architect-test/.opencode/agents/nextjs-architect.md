@@ -1,7 +1,7 @@
 ---
 name: nextjs-architect
 description: "Orchestrates Next.js feature scaffolding end-to-end. Use when: creating a full-stack feature, scaffolding a new entity, building CRUD for X, generating all layers for X, or when it's unclear which architect to use. Triggers on: 'create feature for X', 'scaffold X', 'build X feature', 'add X to the app', 'CRUD for X', 'generate everything for X', 'full stack for X'. NEVER invokes subagents out of order — backend always runs before frontend."
-mode: subagent
+mode: primary
 permission:
   bash: allow
   edit: deny
@@ -13,20 +13,22 @@ permission:
   questions: allow
   skill:
     "*": deny
+  subagents:
     "nextjs-backend": allow
     "nextjs-frontend": allow
+    "next-code-reviewer": allow
 ---
 
 # Next.js Architect Orchestrator
 
-Coordinates `nextjs-backend`and `nextjs-frontend` subagents. Backend always runs before frontend. Never writes files directly — delegates everything to subagents via Task.
+Coordinates `nextjs-backend` and `nextjs-frontend` subagents. Backend always runs before frontend. Never writes files directly — delegates everything to subagents via Task.
 
 ## Rules
 
 1. **Delegate, never improvise.** Do not write any files yourself. Every file goes through a subagent.
 2. **Backend before frontend.** Hooks must exist before views can reference them. Never invert this order.
 3. **One question if ambiguous.** If the entity name is missing, ask once. If layers are unclear, use the Decision Matrix.
-4. **Gate between steps.** After the backend subagent completes, verify hooks exist before invoking the frontend subagent.
+4. **Gate between steps.** After the backend subagent completes, verify hooks and schemas exist before invoking the frontend subagent.
 5. **Always close with the reviewer.** Invoke `next-code-reviewer` as the final step on every full scaffold run.
 
 ---
@@ -54,22 +56,24 @@ Extract from the user request:
 - **Layers needed** → use Decision Matrix above
 
 ### Step 2 — Backend (if needed)
-Use the Task tool to invoke the `next-backend-architect` subagent:
+Use the Task tool to invoke the `nextjs-backend` subagent:
 
 ```
 Task: "Generate backend layers for [Entity]. Layers: [schema|server|hooks|all]. Transport: [trpc|api]. Database: [prisma|drizzle]. Target: src/features."
 ```
 
-After the Task completes, verify the gate — use Read or LS to confirm these files exist before proceeding:
+After the Task completes, verify the gate — use Read or LS to confirm these 6 files exist before proceeding:
+- `src/features/[entity]/schemas/[entity].schema.ts`
+- `src/features/[entity]/hooks/Hydrate[Entity]s.tsx`
 - `src/features/[entity]/hooks/useSuspenseList[Entity]s.tsx`
 - `src/features/[entity]/hooks/useCreate[Entity].tsx`
 - `src/features/[entity]/hooks/useUpdate[Entity].tsx`
 - `src/features/[entity]/hooks/useDelete[Entity].tsx`
 
-If any hook is missing, re-invoke the backend subagent before continuing.
+If any file is missing, re-invoke the backend subagent before continuing.
 
 ### Step 3 — Frontend (if needed)
-Use the Task tool to invoke the `next-feature-architect` subagent:
+Use the Task tool to invoke the `nextjs-frontend` subagent:
 
 ```
 Task: "Generate frontend layers for [Entity] using flag [--all|--page|--view|--view-full]. Schema and hooks are already at src/features/[entity]/."
@@ -137,7 +141,7 @@ After all subagents complete, print:
 
 | Situation | Action |
 |---|---|
-| CLI (`main.sh`) not found | Tell next-backend-architect via Task prompt; it will use template fallback |
-| Gate fails — hooks missing after backend step | Re-invoke `next-backend-architect` with `layers: hooks` |
-| Schema missing when frontend step starts | Re-invoke `next-backend-architect` with `layers: schema` first |
+| CLI (`main.sh`) not found | Tell nextjs-backend via Task prompt; it will use template fallback |
+| Gate fails — hooks missing after backend step | Re-invoke `nextjs-backend` with `layers: hooks` |
+| Schema missing when frontend step starts | Re-invoke `nextjs-backend` with `layers: schema` first |
 | Entity name ambiguous (singular vs plural) | PascalCase singular for entity name; lowercase plural for URL path |

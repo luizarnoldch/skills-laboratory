@@ -3,9 +3,6 @@ import { createTRPCRouter, protectedProcedure, baseProcedure } from "@/trpc/init
 import { TRPCError } from "@trpc/server"
 import * as productService from "./product.service"
 import { createProductSchema, updateProductSchema, deleteProductSchema } from "../schemas/product.schema"
-import { z } from "zod"
-
-const getProductSchema = z.object({ id: z.uuid() })
 
 export const productRouter = createTRPCRouter({
   list: baseProcedure.query(async () => {
@@ -17,7 +14,7 @@ export const productRouter = createTRPCRouter({
   }),
 
   get: baseProcedure
-    .input(getProductSchema)
+    .input(deleteProductSchema)
     .query(async ({ input }) => {
       try {
         return await productService.get(input.id)
@@ -35,6 +32,9 @@ export const productRouter = createTRPCRouter({
       try {
         return await productService.create(input)
       } catch (err) {
+        if (err instanceof Error && err.message.includes("already exists")) {
+          throw new TRPCError({ code: "CONFLICT", message: err.message })
+        }
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create product" })
       }
     }),

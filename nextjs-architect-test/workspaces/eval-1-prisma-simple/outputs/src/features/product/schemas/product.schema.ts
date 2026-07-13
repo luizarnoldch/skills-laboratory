@@ -1,10 +1,11 @@
 import { z } from "zod"
 
+// Define base schema manually or use generated Prisma types
 export const productSchema = z.object({
-  id: z.uuid(),
+  id: z.string(),
   name: z.string().min(1),
-  description: z.string().nullable(),
-  price: z.number(),
+  description: z.string().optional(),
+  price: z.number().positive(),
   stock: z.number().int().default(0),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -12,7 +13,7 @@ export const productSchema = z.object({
 
 export const createProductSchema = productSchema.omit({ id: true, createdAt: true, updatedAt: true })
 export const updateProductSchema = productSchema.partial().required({ id: true })
-export const deleteProductSchema = z.object({ id: z.uuid() })
+export const deleteProductSchema = z.object({ id: z.string() })
 
 export type Product = z.infer<typeof productSchema>
 export type CreateProductInput = z.infer<typeof createProductSchema>

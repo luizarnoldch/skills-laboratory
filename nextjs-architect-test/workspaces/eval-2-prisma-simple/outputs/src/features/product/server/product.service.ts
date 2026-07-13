@@ -16,6 +16,10 @@ export const get = async (id: string): Promise<Product> => {
 }
 
 export const create = async (data: CreateProductInput): Promise<Product> => {
+  const existing = await productRepository.findByName(data.name)
+  if (existing) {
+    throw new Error("Product already exists")
+  }
   return productRepository.create(data)
 }
 

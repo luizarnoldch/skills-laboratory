@@ -38,7 +38,6 @@ const ProductList = () => {
               <th className="px-3 py-2 text-left font-medium text-gray-600">Description</th>
               <th className="px-3 py-2 text-right font-medium text-gray-600">Price</th>
               <th className="px-3 py-2 text-right font-medium text-gray-600">Stock</th>
-              <th className="px-3 py-2 text-left font-medium text-gray-600">Created At</th>
               <th className="px-3 py-2 text-right font-medium text-gray-600">Actions</th>
             </tr>
           </thead>
@@ -46,11 +45,10 @@ const ProductList = () => {
             {products.map((product) => (
               <tr key={product.id} className="border-b hover:bg-gray-50">
                 <td className="px-3 py-2 font-mono text-xs text-gray-500">{product.id}</td>
-                <td className="px-3 py-2">{product.name}</td>
-                <td className="px-3 py-2 text-gray-500">{product.description ?? "-"}</td>
+                <td className="px-3 py-2 font-medium">{product.name}</td>
+                <td className="px-3 py-2 text-gray-600">{product.description ?? "—"}</td>
                 <td className="px-3 py-2 text-right">${product.price.toFixed(2)}</td>
                 <td className="px-3 py-2 text-right">{product.stock}</td>
-                <td className="px-3 py-2 text-gray-500 text-xs">{new Date(product.createdAt).toLocaleDateString()}</td>
                 <td className="px-3 py-2 text-right">
                   <div className="flex justify-end gap-3">
                     <button
