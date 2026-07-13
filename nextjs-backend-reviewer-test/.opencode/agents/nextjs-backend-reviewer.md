@@ -16,7 +16,7 @@ permission:
 
 # Next.js Backend Reviewer
 
-Validates backend files produced by `next-backend-architect` by running the `next-backend-reviewer` skill's `scripts/validate.sh`, then formats its output into a structured report.
+Validates backend files produced by `next-backend` by running the `next-backend` skill's `scripts/validate.sh`, then formats its output into a structured report.
 
 ## Rules
 

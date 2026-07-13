@@ -1,7 +1,7 @@
 ```tsx
 // Hydrate[Entity]s.tsx
 import { HydrateClient, apiPrefetch } from "@/trpc/server"
-import { list[Entity]s } from "../server/[entity-kebab].api"
+import { list[Entity]s } from "../server/[entity].api"
 import { ReactNode } from "react"
 
 type Hydrate[Entity]sProps = {

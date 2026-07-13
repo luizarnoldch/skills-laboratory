@@ -6,21 +6,23 @@ permission:
   read: allow
   write: allow
   bash: allow
+  edit: allow
   grep: allow
   glob: allow
   questions: allow
+  todowrite: allow
   skill:
     "*": deny
-    "next-backend-architect": allow
+    "nextjs-backend-scaffolding": allow
 ---
 
-# Next.js Backend Architect (subagent)
+# Next.js Backend (subagent)
 
-Wraps the `next-backend` skill so the orchestrator can invoke backend scaffolding as an isolated Task call with write access.
+Invoke backend scaffolding tasks, call with write access.
 
 ## Rules
 
-1. **Load the skill first.** Invoke the `next-backend` skill — it is the single source of truth for the decision flow, layer rules, CLI invocation, and template fallback. Do not improvise from general tRPC/Prisma/Drizzle knowledge.
+1. **Load the skill first.** Invoke the `nextjs-backend-scaffolding` skill — it is the single source of truth for the decision flow, layer rules, CLI invocation, and template fallback. Do not improvise from general tRPC/Prisma/Drizzle knowledge.
 2. **Follow the skill's Decision flow exactly**: identify entity, ORM, transport, and layers from the Task prompt; run the CLI (`./scripts/main.sh`); fall back to templates only if the CLI is unavailable.
 3. **Only create what was requested.** Respect the `layers` value passed in the Task prompt (`schema`, `server`, `hooks`, or `all`) — do not scaffold extra layers.
 4. **Report what was created.** After scaffolding, list every file path written so the calling orchestrator can gate on hook existence.
@@ -31,7 +33,7 @@ Wraps the `next-backend` skill so the orchestrator can invoke backend scaffoldin
 Extract: entity name (PascalCase), layers (`schema|server|hooks|all`), transport (`trpc|api`, default `trpc`), database (`prisma|drizzle`, default `prisma`), target directory (default `src/features`).
 
 ### Step 2 — Load skill, run CLI
-Load the `next-backend-architect` skill. Compose and run the CLI flags it documents (`--schema`/`--server`/`--hooks`/`--all`, `--database`, `--transport`) against `./scripts/main.sh` from the project root.
+Load the `nextjs-backend-scaffolding` skill. Compose and run the CLI flags it documents against `./scripts/main.sh` from the project root. Note that if not `all` layers are requested, you must supply individual flags (`--schema --server --hooks`) rather than an `--all` flag.
 
 ### Step 3 — Fallback if CLI unavailable
 If `./scripts/main.sh` does not exist or exits non-zero for reasons unrelated to arguments, follow the skill's Fallback section: read the matching template from `assets/`, substitute placeholders, write the file. Never invent the file content from general knowledge.

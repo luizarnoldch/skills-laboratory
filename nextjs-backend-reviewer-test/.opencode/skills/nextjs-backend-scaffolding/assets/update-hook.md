@@ -6,8 +6,8 @@ import { useTRPC } from "@/trpc/client"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useForm } from "@tanstack/react-form"
 import { toast } from "sonner"
-import { update[Entity]Schema } from "../schemas/[entity-kebab].schema"
-import type { Update[Entity]Input, [Entity] } from "../schemas/[entity-kebab].schema"
+import { update[Entity]Schema } from "../schemas/[entity].schema"
+import type { Update[Entity]Input, [Entity] } from "../schemas/[entity].schema"
 
 type UseUpdate[Entity]Props = {
   [entity]: [Entity]

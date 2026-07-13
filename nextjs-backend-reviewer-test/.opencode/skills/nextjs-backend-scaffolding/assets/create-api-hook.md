@@ -5,9 +5,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useForm } from "@tanstack/react-form"
 import { toast } from "sonner"
-import { create[Entity] } from "../server/[entity-kebab].api"
-import { create[Entity]Schema } from "../schemas/[entity-kebab].schema"
-import type { Create[Entity]Input } from "../schemas/[entity-kebab].schema"
+import { create[Entity] } from "../server/[entity].api"
+import { create[Entity]Schema } from "../schemas/[entity].schema"
+import type { Create[Entity]Input } from "../schemas/[entity].schema"
 
 type UseCreate[Entity]Props = {
   onSuccess?: () => void
