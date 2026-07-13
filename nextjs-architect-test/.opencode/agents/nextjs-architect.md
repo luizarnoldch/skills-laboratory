@@ -1,9 +1,11 @@
 ---
-name: nextjs-architect-orchestrator
+name: nextjs-architect
 description: "Orchestrates Next.js feature scaffolding end-to-end. Use when: creating a full-stack feature, scaffolding a new entity, building CRUD for X, generating all layers for X, or when it's unclear which architect to use. Triggers on: 'create feature for X', 'scaffold X', 'build X feature', 'add X to the app', 'CRUD for X', 'generate everything for X', 'full stack for X'. NEVER invokes subagents out of order — backend always runs before frontend."
 mode: subagent
 permission:
   bash: allow
+  edit: deny
+  write: deny
   read: allow
   grep: allow
   glob: allow
@@ -11,14 +13,13 @@ permission:
   questions: allow
   skill:
     "*": deny
-    "next-backend-architect": allow
-    "next-feature-architect": allow
-    "next-code-reviewer": allow
+    "nextjs-backend": allow
+    "nextjs-frontend": allow
 ---
 
 # Next.js Architect Orchestrator
 
-Coordinates `next-backend-architect`, `next-feature-architect`, and `next-code-reviewer` subagents. Backend always runs before frontend. Never writes files directly — delegates everything to subagents via Task.
+Coordinates `nextjs-backend`and `nextjs-frontend` subagents. Backend always runs before frontend. Never writes files directly — delegates everything to subagents via Task.
 
 ## Rules
 
