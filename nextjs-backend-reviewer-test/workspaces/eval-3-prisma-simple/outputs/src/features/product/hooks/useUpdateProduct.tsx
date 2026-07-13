@@ -22,7 +22,7 @@ const useUpdateProduct = ({ product, onSuccess, onError }: UseUpdateProductProps
     ...trpc.product.update.mutationOptions(),
     onSuccess: async (data) => {
       await queryClient.invalidateQueries(trpc.product.list.queryOptions())
-      await queryClient.invalidateQueries(trpc.product.getById.queryOptions({ id: data.id }))
+      await queryClient.invalidateQueries(trpc.product.get.queryOptions({ id: data.id }))
       toast.success("Product updated successfully")
       onSuccess?.()
     },
@@ -37,8 +37,9 @@ const useUpdateProduct = ({ product, onSuccess, onError }: UseUpdateProductProps
     defaultValues: {
       id: product.id,
       name: product.name,
+      description: product.description,
       price: product.price,
-      categoryId: product.categoryId,
+      stock: product.stock,
     } as UpdateProductInput,
     validators: {
       onChange: updateProductSchema,

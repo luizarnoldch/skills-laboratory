@@ -1,3 +1,4 @@
+```ts
 // product.router.ts
 import { createTRPCRouter, protectedProcedure, baseProcedure } from "@/trpc/init"
 import { TRPCError } from "@trpc/server"
@@ -66,3 +67,4 @@ export const productRouter = createTRPCRouter({
       }
     }),
 })
+```

@@ -32,8 +32,10 @@ const useCreateProduct = ({ onSuccess, onError }: UseCreateProductProps = {}) =>
 
   const form = useForm({
     defaultValues: {
-      [requiredFields]: [defaultValue], // Use this for required fields like enums, dates, etc.
-      [optionalFields]: [primitiveInitualValue], // Use this for optional fields
+      name: "",
+      description: null,
+      price: 0,
+      stock: 0,
     } as CreateProductInput,
     validators: {
       onChange: createProductSchema,

@@ -1,3 +1,4 @@
+```ts
 // useCreateProduct.tsx
 "use client"
 
@@ -32,8 +33,10 @@ const useCreateProduct = ({ onSuccess, onError }: UseCreateProductProps = {}) =>
 
   const form = useForm({
     defaultValues: {
-      [requiredFields]: [defaultValue], // Use this for required fields like enums, dates, etc.
-      [optionalFields]: [primitiveInitualValue], // Use this for optional fields
+      name: "",
+      description: "",
+      price: 0,
+      categoryId: undefined,
     } as CreateProductInput,
     validators: {
       onChange: createProductSchema,
@@ -51,3 +54,4 @@ const useCreateProduct = ({ onSuccess, onError }: UseCreateProductProps = {}) =>
 }
 
 export default useCreateProduct
+```

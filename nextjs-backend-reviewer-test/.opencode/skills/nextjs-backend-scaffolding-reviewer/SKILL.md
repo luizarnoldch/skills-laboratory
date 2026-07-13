@@ -71,6 +71,15 @@ Running verification logic requires invoking the following command from the proj
 bash scripts/validate.sh <target-folder> <Entity> --transport <trpc|api> --database <prisma|drizzle> [--typecheck]
 ```
 
+### Schema Custom Fields Validation
+
+For Prisma schemas, the validator checks that entity-specific fields have been filled in beyond the template's base structure. Two conditions trigger a failure:
+
+1. **Placeholder detected** — the `...` template stub is still present in the file, meaning custom fields were never filled in.
+2. **Only base fields** — the `z.object({...})` block contains only `id`, `createdAt`, `updatedAt`, or `deletedAt` fields. At least one entity-specific field (derived from the Prisma model) must be present.
+
+For Drizzle schemas, custom fields are auto-derived from the Drizzle table definition via `createSelectSchema`/`createInsertSchema`/`createUpdateSchema`, so explicit field-counting validation is not applied.
+
 ### Script Execution Contracts
 
 The underlying shell scripts scan physical paths and dump strict output flags matching this pattern:

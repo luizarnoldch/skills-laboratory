@@ -19,7 +19,7 @@ const useDeleteProduct = ({ productId, onSuccess, onError }: UseDeleteProductPro
     ...trpc.product.delete.mutationOptions({ id: productId }),
     onSuccess: async () => {
       await queryClient.invalidateQueries(trpc.product.list.queryOptions())
-      await queryClient.invalidateQueries(trpc.product.getById.queryOptions({ id: productId }))
+      await queryClient.invalidateQueries(trpc.product.get.queryOptions({ id: productId }))
       toast.success("Product deleted successfully")
       onSuccess?.()
     },

@@ -1,3 +1,4 @@
+```ts
 // useDeleteProduct.tsx
 "use client"
 
@@ -35,3 +36,4 @@ const useDeleteProduct = ({ productId, onSuccess, onError }: UseDeleteProductPro
 }
 
 export default useDeleteProduct
+```

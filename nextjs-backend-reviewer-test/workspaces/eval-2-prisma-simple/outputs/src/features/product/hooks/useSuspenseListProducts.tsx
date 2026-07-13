@@ -1,3 +1,4 @@
+```tsx
 // useSuspenseListProducts.tsx
 "use client"
 
@@ -14,3 +15,4 @@ const useSuspenseListProducts = () => {
 }
 
 export default useSuspenseListProducts
+```

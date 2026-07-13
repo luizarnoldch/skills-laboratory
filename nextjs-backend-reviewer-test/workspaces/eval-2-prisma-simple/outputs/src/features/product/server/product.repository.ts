@@ -1,3 +1,4 @@
+```ts
 // product.repository.ts
 import { db } from "@/lib/db"
 import type { CreateProductInput, UpdateProductInput } from "../schemas/product.schema"
@@ -39,3 +40,4 @@ export const remove = async (id: string): Promise<void> => {
     where: { id },
   })
 }
+```

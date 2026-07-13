@@ -1,4 +1,5 @@
-// HydrateProduct.tsx
+```tsx
+// HydrateProducts.tsx
 import { HydrateClient, prefetch, trpc } from "@/trpc/server"
 import { ReactNode } from "react"
 
@@ -17,3 +18,4 @@ const HydrateProducts = ({ children }: HydrateProductsProps) => {
 }
 
 export default HydrateProducts
+```

@@ -1,3 +1,4 @@
+```tsx
 // useUpdateProduct.tsx
 "use client"
 
@@ -37,6 +38,7 @@ const useUpdateProduct = ({ product, onSuccess, onError }: UseUpdateProductProps
     defaultValues: {
       id: product.id,
       name: product.name,
+      description: product.description ?? "",
       price: product.price,
       categoryId: product.categoryId,
     } as UpdateProductInput,
@@ -55,3 +57,4 @@ const useUpdateProduct = ({ product, onSuccess, onError }: UseUpdateProductProps
 }
 
 export default useUpdateProduct
+```

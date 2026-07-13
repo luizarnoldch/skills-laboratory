@@ -32,6 +32,25 @@ check_schema() {
     reasons+=("must not use the interface keyword")
   fi
 
+  if grep -qE '^[[:space:]]*\.\.\.\s*,?\s*$' "$file"; then
+    reasons+=("schema contains the '...' template placeholder -- custom model fields were not filled in (replace '...' with actual entity fields derived from the Prisma model)")
+  fi
+
+  local field_names base_fields
+  base_fields='^(id|createdAt|updatedAt|deletedAt)$'
+  field_names=$(grep -oE '^[[:space:]]+[a-zA-Z_]+\s*:' "$file" 2>/dev/null | sed 's/^[[:space:]]*//;s/://;s/[[:space:]]*$//' || true)
+  local has_custom=false
+  while IFS= read -r fname; do
+    if [[ -n "$fname" && ! "$fname" =~ $base_fields ]]; then
+      has_custom=true
+      break
+    fi
+  done <<< "$field_names"
+
+  if [[ "$has_custom" == false ]]; then
+    reasons+=("schema contains only base fields (id, createdAt, updatedAt) -- entity-specific custom fields are missing (the Prisma model fields were not translated into Zod schema fields)")
+  fi
+
   if [[ ${#reasons[@]} -eq 0 ]]; then
     pass_layer schema
   else

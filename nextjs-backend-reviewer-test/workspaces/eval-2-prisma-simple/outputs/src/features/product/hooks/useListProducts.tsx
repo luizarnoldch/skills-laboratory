@@ -1,3 +1,4 @@
+```tsx
 // useListProducts.tsx
 "use client"
 
@@ -16,3 +17,4 @@ const useListProducts = () => {
 }
 
 export default useListProducts
+```

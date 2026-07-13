@@ -1,3 +1,4 @@
+```ts
 // product.service.ts
 import * as productRepository from "./product.repository"
 import type { CreateProductInput, UpdateProductInput } from "../schemas/product.schema"
@@ -38,3 +39,4 @@ export const remove = async (id: string): Promise<void> => {
   }
   await productRepository.remove(id)
 }
+```
