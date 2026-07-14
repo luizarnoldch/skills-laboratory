@@ -1,0 +1,9 @@
+{
+  "name": "local/next-feature-architect",
+  "description": "Scaffolds and maintains the full frontend of a feature-based Next.js app, Use this skill when creating or modifying frontend layers: hook utilization, pages and views integrations, data hydration, frontend business logic.",
+  "private": true,
+  "skills": [
+    "."
+  ],
+  "version": "0.1.0"
+}
