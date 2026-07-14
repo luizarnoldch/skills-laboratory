@@ -33,7 +33,7 @@ const useCreateProduct = ({ onSuccess, onError }: UseCreateProductProps = {}) =>
   const form = useForm({
     defaultValues: {
       name: "",
-      description: null,
+      description: "",
       price: 0,
       stock: 0,
     } as CreateProductInput,

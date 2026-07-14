@@ -37,9 +37,7 @@ const useUpdateProduct = ({ product, onSuccess, onError }: UseUpdateProductProps
     defaultValues: {
       id: product.id,
       name: product.name,
-      description: product.description,
       price: product.price,
-      stock: product.stock,
       categoryId: product.categoryId,
     } as UpdateProductInput,
     validators: {

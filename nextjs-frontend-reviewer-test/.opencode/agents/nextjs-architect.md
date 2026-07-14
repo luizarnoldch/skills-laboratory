@@ -17,11 +17,12 @@ permission:
     "nextjs-backend": allow
     "nextjs-frontend": allow
     "nextjs-backend-reviewer": allow
+    "nextjs-frontend-reviewer": allow
 ---
 
 # Next.js Architect Orchestrator
 
-Coordinates `nextjs-backend`, `nextjs-backend-reviewer`, and `nextjs-frontend` subagents. Backend setup and validation always run before frontend views are initialized. Never writes files directly — delegates everything to subagents via Task.
+Coordinates `nextjs-backend`, `nextjs-backend-reviewer`, `nextjs-frontend`, and `nextjs-frontend-reviewer` subagents. Backend setup and validation always run before frontend views are initialized. Frontend components are also validated before completion. Never writes files directly — delegates everything to subagents via Task.
 
 ## Rules
 
@@ -37,12 +38,12 @@ Coordinates `nextjs-backend`, `nextjs-backend-reviewer`, and `nextjs-frontend` s
 
 Classify the user request before invoking subagents:
 
-| Request signals | Invoke backend subagent | Invoke reviewer subagent | Invoke frontend subagent |
-|---|---|---|---|
-| "schema", "router", "service", "repository", "hooks", "tRPC", "API route" | ✅ | ✅ | ❌ |
-| "page", "view", "component", "UI", "list page", "table", "form" | ❌ | ❌ | ✅ |
-| "full stack", "all layers", "everything", "CRUD", "feature for X" | ✅ | ✅ | ✅ |
-| Entity name only — ambiguous (e.g. "create Product") | Ask user: "Backend, frontend, or both?" | — | — |
+| Request signals | Invoke backend subagent | Invoke backend reviewer | Invoke frontend subagent | Invoke frontend reviewer |
+|---|---|---|---|---|
+| "schema", "router", "service", "repository", "hooks", "tRPC", "API route" | ✅ | ✅ | ❌ | ❌ |
+| "page", "view", "component", "UI", "list page", "table", "form" | ❌ | ❌ | ✅ | ✅ |
+| "full stack", "all layers", "everything", "CRUD", "feature for X" | ✅ | ✅ | ✅ | ✅ |
+| Entity name only — ambiguous (e.g. "create Product") | Ask user: "Backend, frontend, or both?" | — | — | — |
 
 ---
 
@@ -85,12 +86,27 @@ Task: "Fix the following issues for [Entity] backend: [Insert specific required 
 ```
 After the fix task completes, re-run the `nextjs-backend-reviewer` task (same `Target:`). Repeat until the verdict is `PASS`.
 
-### Step 3 — Frontend (if needed)
+### Step 3 — Frontend Generation and Verification Loop (if needed)
 Once the backend files are verified, invoke the `nextjs-frontend` subagent:
 
 ```
-Task: "Generate frontend layers for [Entity] using flag [--all|--page|--view|--view-full]. Target: <absolute-project-root-path>. Schema and hooks are already validated at <absolute-project-root-path>/src/features/[entity]/."
+Task: "Generate frontend layers for [Entity] using flag [--all|--page|--view|--view-full]. Transport: [trpc|api]. Target: <absolute-project-root-path>. Schema and hooks are already validated at <absolute-project-root-path>/src/features/[entity]/."
 ```
+
+Once the frontend generation subagent completes, you must run the verification gate via the frontend reviewer subagent:
+
+```
+Task: "Validate frontend layers for [Entity]. Transport: [trpc|api]. Target: <absolute-project-root-path>."
+```
+
+#### Evaluating the Frontend Gate Verdict:
+* **If Verdict is PASS:** Complete! Proceed to **Output Report**.
+* **If Verdict is FAIL:** Extract the issues from the `Required Fixes` block of the report and issue a remediation task back to the frontend subagent:
+
+```
+Task: "Fix the following issues for [Entity] frontend: [Insert specific required fixes from reviewer report]. Keep existing transport ([trpc|api]). Target: <absolute-project-root-path>."
+```
+After the fix task completes, re-run the `nextjs-frontend-reviewer` task (same `Target:`). Repeat until the verdict is `PASS`.
 
 `<absolute-project-root-path>` is the exact same literal path resolved in
 Step 1 — reuse it verbatim in every Task prompt above. Never substitute a
@@ -130,19 +146,15 @@ src/features/[entity]/hooks/useCreate[Entity].tsx
 src/features/[entity]/hooks/useUpdate[Entity].tsx
 src/features/[entity]/hooks/useDelete[Entity].tsx
 
-✅ Frontend layers created
+✅ Frontend layers verified & created
 ────────────────────────────────────────
 src/app/[entity]s/page.tsx
-src/features/[entity]/views/[Entity]sView.tsx
+src/features/[entity]/views/[Entity]View.tsx
 src/features/[entity]/components/[Entity]List/index.tsx
-src/features/[entity]/components/[Entity]List/[Entity]ListHeader.tsx
-src/features/[entity]/components/[Entity]Table.tsx
-src/features/[entity]/components/[Entity]Form.tsx
-src/features/[entity]/components/loaders/[Entity]ListLoader.tsx
-src/features/[entity]/components/error/[Entity]ListError.tsx
-src/features/[entity]/components/empty/[Entity]ListEmpty.tsx
+src/features/[entity]/components/[Entity]FormCreate.tsx
+src/features/[entity]/components/[Entity]FormUpdate.tsx
 
-✅ Verification Loop Complete — Core architecture matches template standards.
+✅ Backend & Frontend Verification Complete — All layers match template standards and field coverage validated.
 ```
 
 ---
@@ -152,5 +164,7 @@ src/features/[entity]/components/empty/[Entity]ListEmpty.tsx
 | Situation | Action |
 |---|---|
 | CLI (`main.sh` or validation scripts) not found | Explicitly add a fallback instruction in the subagent task to use inline programmatic scaffolding templates instead of scripts. |
-| Reviewer script flags mixed transport | Route back to `nextjs-backend` with specific instructions to normalize imports and methods to match either pure tRPC or pure REST (`apiFetch`). |
+| Backend reviewer script flags mixed transport | Route back to `nextjs-backend` with specific instructions to normalize imports and methods to match either pure tRPC or pure REST (`apiFetch`). |
+| Frontend reviewer flags missing schema fields in components | Route back to `nextjs-frontend` with specific instructions to add missing fields to List table headers/cells and Form inputs. |
+| Frontend reviewer flags template comments still present | Route back to `nextjs-frontend` with specific instructions to replace template comments with actual component code using schema fields. |
 | Entity name casing inconsistent | Intercept and force conversion: Directory = camelCase singular; Router/Schema = lowercase singular prefix; React Components/Hooks/Types = PascalCase. |

@@ -40,7 +40,6 @@ const useUpdateProduct = ({ product, onSuccess, onError }: UseUpdateProductProps
       description: product.description,
       price: product.price,
       stock: product.stock,
-      categoryId: product.categoryId,
     } as UpdateProductInput,
     validators: {
       onChange: updateProductSchema,
