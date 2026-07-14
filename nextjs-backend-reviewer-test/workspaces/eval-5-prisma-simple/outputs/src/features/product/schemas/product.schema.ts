@@ -4,14 +4,14 @@ import { z } from "zod"
 export const productSchema = z.object({
   id: z.uuid(),
   name: z.string(),
-  description: z.string().optional(),
+  description: z.string(),
   price: z.number(),
-  stock: z.number().int().default(0),
+  stock: z.number(),
   createdAt: z.date(),
   updatedAt: z.date(),
 })
 
-export const createProductSchema = productSchema.omit({ id: true, createdAt: true })
+export const createProductSchema = productSchema.omit({ id: true, createdAt: true, updatedAt: true })
 export const updateProductSchema = productSchema.partial().required({ id: true })
 export const deleteProductSchema = z.object({ id: z.uuid() })
 

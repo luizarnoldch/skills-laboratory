@@ -42,7 +42,7 @@ _check_hook_default_values() {
   if [[ ${#missing_fields[@]} -gt 0 ]]; then
     local missing_str
     missing_str=$(IFS=,; echo "${missing_fields[*]}")
-    reasons+=("${hook_label}: defaultValues missing Prisma model fields: $missing_str")
+    reasons+=("${hook_label}: defaultValues missing expected fields: $missing_str")
   fi
 }
 
@@ -95,21 +95,6 @@ check_hooks() {
       fi
     done
 
-    # --- Prisma model field cross-check for useCreate / useUpdate ---
-    if [[ -n "$prisma_file" && -f "$prisma_file" ]]; then
-      local prisma_create_fields prisma_update_fields
-      prisma_create_fields=$(get_prisma_create_fields "$prisma_file" "$entity_pascal" 2>/dev/null) || true
-      prisma_update_fields=$(get_prisma_update_fields "$prisma_file" "$entity_pascal" 2>/dev/null) || true
-
-      if [[ -n "$prisma_create_fields" ]]; then
-        _check_hook_default_values "$use_create" "$prisma_create_fields" "useCreate${entity_pascal}"
-      fi
-
-      if [[ -n "$prisma_update_fields" ]]; then
-        _check_hook_default_values "$use_update" "$prisma_update_fields" "useUpdate${entity_pascal}"
-      fi
-    fi
-
   elif [[ "$transport" == "api" ]]; then
     require_grep "$hydrate" 'apiPrefetch' "$(basename "$hydrate") must call apiPrefetch({ queryKey, queryFn })" || true
     require_grep "$hydrate" "list${entity_pascal}s.*from \"\.\./server/$entity_kebab\.api\"" "$(basename "$hydrate") must import list${entity_pascal}s from ../server/$entity_kebab.api" || true
@@ -128,6 +113,37 @@ check_hooks() {
 
   else
     reasons+=("unknown transport '$transport' (expected trpc or api)")
+  fi
+
+  # --- Schema.ts field cross-check for useCreate / useUpdate (both transports) ---
+  local schema_file="$target/src/features/$entity_kebab/schemas/$entity_kebab.schema.ts"
+  if [[ -f "$schema_file" ]]; then
+    local schema_create_fields schema_update_fields
+    schema_create_fields=$(get_schema_create_fields "$schema_file" "$entity_camel" 2>/dev/null) || true
+    schema_update_fields=$(get_schema_update_fields "$schema_file" "$entity_camel" 2>/dev/null) || true
+
+    if [[ -n "$schema_create_fields" ]]; then
+      _check_hook_default_values "$use_create" "$schema_create_fields" "useCreate${entity_pascal}"
+    fi
+
+    if [[ -n "$schema_update_fields" ]]; then
+      _check_hook_default_values "$use_update" "$schema_update_fields" "useUpdate${entity_pascal}"
+    fi
+  fi
+
+  # --- Additional Prisma model field cross-check when available (both transports) ---
+  if [[ -n "$prisma_file" && -f "$prisma_file" ]]; then
+    local prisma_create_fields prisma_update_fields
+    prisma_create_fields=$(get_prisma_create_fields "$prisma_file" "$entity_pascal" 2>/dev/null) || true
+    prisma_update_fields=$(get_prisma_update_fields "$prisma_file" "$entity_pascal" 2>/dev/null) || true
+
+    if [[ -n "$prisma_create_fields" ]]; then
+      _check_hook_default_values "$use_create" "$prisma_create_fields" "useCreate${entity_pascal} (Prisma cross-check)"
+    fi
+
+    if [[ -n "$prisma_update_fields" ]]; then
+      _check_hook_default_values "$use_update" "$prisma_update_fields" "useUpdate${entity_pascal} (Prisma cross-check)"
+    fi
   fi
 
   if [[ ${#reasons[@]} -eq 0 ]]; then

@@ -1,7 +1,7 @@
 ---
 name: nextjs-frontend
 description: "Subagent that scaffolds Next.js frontend feature layers (pages, views, components) wired to existing backend hooks. Use when: the orchestrator needs frontend layers generated for an entity whose backend hooks already exist. Writes files under src/app/ and src/features/[entity]/."
-mode: primary
+mode: subagent
 permission:
   read: allow
   write: allow

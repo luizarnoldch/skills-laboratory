@@ -64,7 +64,7 @@ Extract from the user request:
 - **Layers needed** → Reference the Decision Matrix.
 
 ### Step 2 — Backend Generation and Verification Loop
-If backend layers are required, invoke the backend subagent:
+If backend layers are required, invoke the `nextjs-backend` subagent:
 
 ```
 Task: "Generate backend layers for [Entity]. Layers: [schema|server|hooks|all]. Transport: [trpc|api]. Database: [prisma|drizzle]. Target: <absolute-project-root-path>."
@@ -86,7 +86,7 @@ Task: "Fix the following issues for [Entity] backend: [Insert specific required 
 After the fix task completes, re-run the `nextjs-backend-reviewer` task (same `Target:`). Repeat until the verdict is `PASS`.
 
 ### Step 3 — Frontend (if needed)
-Once the backend files are verified, invoke the frontend subagent:
+Once the backend files are verified, invoke the `nextjs-frontend` subagent:
 
 ```
 Task: "Generate frontend layers for [Entity] using flag [--all|--page|--view|--view-full]. Target: <absolute-project-root-path>. Schema and hooks are already validated at <absolute-project-root-path>/src/features/[entity]/."

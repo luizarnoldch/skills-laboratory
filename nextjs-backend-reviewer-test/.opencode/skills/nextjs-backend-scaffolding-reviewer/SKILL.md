@@ -100,14 +100,16 @@ When `--prisma-schema <path>` is provided (or auto-detected at `<target>/prisma/
 - Fields present in the Prisma model but missing from the Zod schema trigger a missing-fields failure.
 - The `...` placeholder stub and base-only-fields checks still apply (see below).
 
-#### Hook Field Check: `useCreate[Entity]`
+#### Hook Field Check: `useCreate[Entity]` (Both tRPC and REST transports)
 - The `defaultValues` object inside `useForm(...)` is inspected for its keys.
 - **Template placeholder detection**: keys like `[requiredFields]`, `[optionalFields]` or values like `[defaultValue]`, `[primitiveInitualValue]` indicate the template was never filled in — triggers immediate failure.
-- **Model cross-check**: every Prisma field classified as user-provided (non-auto-generated: excludes `id` with `@default(cuid|uuid|autoincrement)`, timestamp fields like `createdAt`/`updatedAt`/`deletedAt`) must be present as a key in `defaultValues`.
+- **Primary check (schema.ts)**: Fields from `[entity].schema.ts` (excluding `id`, `createdAt`, `updatedAt`, `deletedAt`) must be present in `defaultValues`. This check runs regardless of whether Prisma schema is available.
+- **Additional Prisma cross-check**: When `--prisma-schema` is provided, every Prisma field classified as user-provided (non-auto-generated: excludes `id` with `@default(cuid|uuid|autoincrement)`, timestamp fields like `createdAt`/`updatedAt`/`deletedAt`) must also be present as a key in `defaultValues`.
 
-#### Hook Field Check: `useUpdate[Entity]`
+#### Hook Field Check: `useUpdate[Entity]` (Both tRPC and REST transports)
 - Same template-placeholder detection applies.
-- **Model cross-check**: `id` plus every user-editable Prisma field (excluding DB-managed timestamps) must be present as a key in `defaultValues`.
+- **Primary check (schema.ts)**: Fields from `[entity].schema.ts` (excluding `createdAt`, `updatedAt`, `deletedAt`, but including `id`) must be present in `defaultValues`. This check runs regardless of whether Prisma schema is available.
+- **Additional Prisma cross-check**: When `--prisma-schema` is provided, `id` plus every user-editable Prisma field (excluding DB-managed timestamps) must also be present as a key in `defaultValues`.
 
 *For Drizzle schemas, custom fields are auto-derived from the Drizzle table definition via `createSelectSchema`/`createInsertSchema`/`createUpdateSchema`, so explicit field-counting and Prisma-model cross-validation is not applied.*
 
@@ -127,7 +129,7 @@ LAYER:schema:FAIL:Zod schema missing Prisma model fields: stock;Zod schema has f
 LAYER:router:PASS
 LAYER:service:PASS
 LAYER:repository:PASS
-LAYER:hooks:FAIL:useCreateProduct: defaultValues contains template placeholder keys (e.g. [requiredFields]) -- replace with actual entity fields;useUpdateProduct: defaultValues missing Prisma model fields: description,stock
+LAYER:hooks:FAIL:useCreateProduct: defaultValues contains template placeholder keys (e.g. [requiredFields]) -- replace with actual entity fields;useUpdateProduct: defaultValues missing expected fields: description,stock
 TYPECHECK:PASS
 VERDICT:FAIL
 ```

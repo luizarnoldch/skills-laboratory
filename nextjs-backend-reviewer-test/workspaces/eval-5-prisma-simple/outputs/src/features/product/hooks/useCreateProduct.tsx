@@ -36,6 +36,7 @@ const useCreateProduct = ({ onSuccess, onError }: UseCreateProductProps = {}) =>
       description: "",
       price: 0,
       stock: 0,
+      categoryId: "",
     } as CreateProductInput,
     validators: {
       onChange: createProductSchema,

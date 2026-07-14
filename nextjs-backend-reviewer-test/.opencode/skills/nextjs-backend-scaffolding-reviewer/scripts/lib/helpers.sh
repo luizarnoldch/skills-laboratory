@@ -70,3 +70,39 @@ require_file() {
   fi
   return 0
 }
+
+# extract_schema_fields <schema_file> <entity_camel>
+# Extracts field names from the base [entity]Schema z.object({...}) block
+extract_schema_fields() {
+  local schema_file="$1"
+  local entity_camel="$2"
+  
+  if [[ ! -f "$schema_file" ]]; then
+    return 1
+  fi
+  
+  # Find the base schema definition: export const [entity]Schema = z.object({
+  # Extract field names from the z.object({...}) block
+  sed -n "/export const ${entity_camel}Schema[[:space:]]*=[[:space:]]*z\.object(/,/^})/p" "$schema_file" 2>/dev/null \
+    | sed -n '/^[[:space:]]*[a-zA-Z_][a-zA-Z0-9_]*[[:space:]]*:/p' \
+    | sed 's/^[[:space:]]*//; s/[[:space:]]*:.*//' \
+    | grep -v '^$'
+}
+
+# get_schema_create_fields <schema_file> <entity_camel>
+# Returns field names that should appear in useCreate defaultValues
+# (excludes id, createdAt, updatedAt, deletedAt)
+get_schema_create_fields() {
+  local schema_file="$1"
+  local entity_camel="$2"
+  extract_schema_fields "$schema_file" "$entity_camel" | grep -Ev '^(id|createdAt|updatedAt|deletedAt)$'
+}
+
+# get_schema_update_fields <schema_file> <entity_camel>
+# Returns field names that should appear in useUpdate defaultValues
+# (includes id, excludes createdAt, updatedAt, deletedAt)
+get_schema_update_fields() {
+  local schema_file="$1"
+  local entity_camel="$2"
+  extract_schema_fields "$schema_file" "$entity_camel" | grep -Ev '^(createdAt|updatedAt|deletedAt)$'
+}
