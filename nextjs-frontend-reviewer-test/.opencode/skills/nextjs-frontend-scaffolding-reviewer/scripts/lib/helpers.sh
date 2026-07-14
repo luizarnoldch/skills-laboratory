@@ -3,10 +3,10 @@
 # Helper functions for frontend validation
 
 # Convert PascalCase to camelCase
+# Note: Use printf to avoid newline between first char and rest
 to_camel_case() {
   local str="$1"
-  echo "${str:0:1}" | tr '[:upper:]' '[:lower:]'
-  echo "${str:1}"
+  printf '%s%s' "$(echo "${str:0:1}" | tr '[:upper:]' '[:lower:]')" "${str:1}"
 }
 
 # Convert PascalCase to kebab-case
@@ -104,8 +104,10 @@ extract_form_fields() {
   local fields=""
   
   # Look for form.Field with name attribute: form.Field name="fieldName"
+  # Use variable to avoid quote-escaping issues with regex containing [^>]
+  local _re_form='form\.Field[^>]*name=["'\'']([a-zA-Z_][a-zA-Z0-9_]*)["'\'']'
   while IFS= read -r line; do
-    if [[ "$line" =~ form\.Field[^>]*name=[\"\'"]([a-zA-Z_][a-zA-Z0-9_]*)[\"\'] ]]; then
+    if [[ "$line" =~ $_re_form ]]; then
       local field_name="${BASH_REMATCH[1]}"
       if [[ -z "$fields" ]]; then
         fields="$field_name"
@@ -116,8 +118,9 @@ extract_form_fields() {
   done < "$file"
   
   # Also look for regular input elements with name attribute
+  local _re_input='<input[^>]*name=["'\'']([a-zA-Z_][a-zA-Z0-9_]*)["'\'']'
   while IFS= read -r line; do
-    if [[ "$line" =~ \<input[^>]*name=[\"\'"]([a-zA-Z_][a-zA-Z0-9_]*)[\"\'] ]]; then
+    if [[ "$line" =~ $_re_input ]]; then
       local field_name="${BASH_REMATCH[1]}"
       # Avoid duplicates
       if [[ ! ",$fields," =~ ,$field_name, ]]; then
