@@ -13,7 +13,6 @@ const ProductFormCreate = ({ onClose }: ProductFormCreateProps) => {
         onSubmit={(e) => { e.preventDefault(); e.stopPropagation(); form.handleSubmit() }}
         className="grid gap-3"
       >
-        {/* Add form.Field for each schema field */}
         <form.Field name="name">
           {(field) => (
             <div>

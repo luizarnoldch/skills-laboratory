@@ -14,30 +14,78 @@ const ProductFormUpdate = ({ product, onClose }: ProductFormUpdateProps) => {
         onSubmit={(e) => { e.preventDefault(); e.stopPropagation(); form.handleSubmit() }}
         className="grid gap-3"
       >
-        <form.Field name="name" render={({ field }) => (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-            <input {...field} className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-          </div>
-        )} />
-        <form.Field name="description" render={({ field }) => (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea {...field} className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" rows={3} />
-          </div>
-        )} />
-        <form.Field name="price" render={({ field }) => (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
-            <input {...field} type="number" step="0.01" min="0" className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-          </div>
-        )} />
-        <form.Field name="stock" render={({ field }) => (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Stock</label>
-            <input {...field} type="number" min="0" className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-          </div>
-        )} />
+        <form.Field name="id">
+          {({ value }) => (
+            <input type="hidden" value={value as string} />
+          )}
+        </form.Field>
+
+        <form.Field name="name">
+          {({ value, onChange }) => (
+            <div className="grid gap-1.5">
+              <label className="text-sm font-medium">Name</label>
+              <input
+                type="text"
+                value={value as string}
+                onChange={(e) => onChange(e.target.value)}
+                className="rounded border px-3 py-2"
+                placeholder="Product name"
+                required
+              />
+            </div>
+          )}
+        </form.Field>
+
+        <form.Field name="description">
+          {({ value, onChange }) => (
+            <div className="grid gap-1.5">
+              <label className="text-sm font-medium">Description</label>
+              <textarea
+                value={value as string}
+                onChange={(e) => onChange(e.target.value)}
+                className="rounded border px-3 py-2"
+                placeholder="Product description (optional)"
+                rows={3}
+              />
+            </div>
+          )}
+        </form.Field>
+
+        <form.Field name="price">
+          {({ value, onChange }) => (
+            <div className="grid gap-1.5">
+              <label className="text-sm font-medium">Price</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={value as number}
+                onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+                className="rounded border px-3 py-2"
+                placeholder="0.00"
+                required
+              />
+            </div>
+          )}
+        </form.Field>
+
+        <form.Field name="stock">
+          {({ value, onChange }) => (
+            <div className="grid gap-1.5">
+              <label className="text-sm font-medium">Stock</label>
+              <input
+                type="number"
+                min="0"
+                value={value as number}
+                onChange={(e) => onChange(parseInt(e.target.value) || 0)}
+                className="rounded border px-3 py-2"
+                placeholder="0"
+                required
+              />
+            </div>
+          )}
+        </form.Field>
+
         <div className="flex justify-end gap-2 pt-1">
           <button
             type="button"
